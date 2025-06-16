@@ -3,18 +3,14 @@
 import time
 import DamFloor_StateEstimation
 import DefectTableUseTotal
-import win32clipboard
 
 import pandas as pd
 import os
 import argparse
 
-
-from datetime import datetime
 from datetime import date
 
 from collections import defaultdict
-from io import BytesIO
 
 import configparser
 
@@ -63,6 +59,7 @@ class Win32COMCacheManager:
 
 
 def checkBujea(bujea):
+    """" 각 부재 폴더 이름 생성 함수"""
     actions = {
         'HRM': ['1R_HRM','1Y_HRM','1B_HRM'],
         'DMR': ['2R_DMR','2Y_DMR','2B_DMR'],
@@ -79,6 +76,14 @@ def checkBujea(bujea):
     return actions.get(bujea)
 
 def get_unique_filenames_without_extension(directory_path):
+    """
+        파일이름 목록 모음
+    Args:
+        directory_path (str): _결함 검출 폴더의 경로_
+
+    Returns:
+        set[str]: _결함검출폴더 내부의 파일이름 목록_
+    """
     # 파일 이름 (확장자 제거) 저장을 위한 set 생성
     
     unique_filenames = set()
@@ -612,13 +617,8 @@ def makeHwp(damName,bujeaName,dirPath,imgPath):
         return xlsx_files
 
     def main_page():
-        ## 한글 API 문제로 인한 절대경로 수정
-        # rel_path = r".\hwp\test1.hwp"
-        # abs_path = os.path.abspath(rel_path)
-        # hwp.Open(abs_path)
-        # print(os.getcwd())
-        # os.chdir(hwp.Path.rsplit("\\", maxsplit=1)[0])
-        # print(os.getcwd())
+        
+       
         # 한글 문서에서 쪽 번호 위치 설정
         hwp.HAction.GetDefault("PageNumPos", hwp.HParameterSet.HPageNumPos.HSet)
 
@@ -672,7 +672,6 @@ def makeHwp(damName,bujeaName,dirPath,imgPath):
             
             append_hwp(os.path.join(os.getcwd(), "템플릿3.template"))
             time.sleep(0.1)
-            #get_nst_table(idx)  
             hwp.FindCtrl()      
             print("Selected Control ID:", hwp.HeadCtrl.CtrlID)
             print("Current Control Position:", hwp.HeadCtrl.GetAnchorPos(0))

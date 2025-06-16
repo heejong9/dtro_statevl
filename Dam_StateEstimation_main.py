@@ -1,18 +1,23 @@
 import DamFloor_StateEstimation
-
-
-import DefectTable
-
 import pandas as pd
-
 import os
 import argparse
-
-import json
 from datetime import datetime
-
+ 
+"""
+    상태평가 등급 생성기 
+    
+    1단계와 1.5단계 생성용도 모듈
+    
+    계산식은 모두  DamFloor_StateEstimation에서 작업
+"""
 
 def createDirectory(directory):
+    """_summary_
+        폴더 비존재시 생성
+    Args:
+        directory (_type_): _폴더경로_
+    """
     try:
         if not os.path.exists(directory):
             os.makedirs(directory)
@@ -21,6 +26,14 @@ def createDirectory(directory):
 
  
 def  get_unique_filenames_without_extension(directory_path):
+    """
+        파일이름 목록 모음
+    Args:
+        directory_path (str): _결함 검출 폴더의 경로_
+
+    Returns:
+        set[str]: _결함검출폴더 내부의 파일이름 목록_
+    """
     # 파일 이름 (확장자 제거) 저장을 위한 set 생성
     unique_filenames = set()
     image_extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.gif', '.tiff', '.webp'}
@@ -53,6 +66,7 @@ bujeaList = {
 }
 
 def checkBujea(bujea):
+    """" 각 부재 폴더 이름 생성 함수"""
     actions = {
         'HRM': ['1R_HRM','1Y_HRM','1B_HRM'],
         'DMR': ['2R_DMR','2Y_DMR','2B_DMR'],
