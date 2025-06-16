@@ -1,0 +1,1050 @@
+{
+    "U01-BS-001": {
+        "index": "BS-001",
+        "area": 128.041,
+        "width": 13.999,
+        "height": 10.835,
+        "ratio": 0.7739838559897135,
+        "dmm": "overflow"
+    },
+    "U02-BS-002": {
+        "index": "BS-002",
+        "area": 114.735,
+        "width": 10.0,
+        "height": 12.039,
+        "ratio": 1.2039,
+        "dmm": "overflow"
+    },
+    "U03-BS-003": {
+        "index": "BS-003",
+        "area": 123.083,
+        "width": 9.999,
+        "height": 12.503,
+        "ratio": 1.2504250425042505,
+        "dmm": "overflow"
+    },
+    "U04-BS-004": {
+        "index": "BS-004",
+        "area": 123.087,
+        "width": 9.999,
+        "height": 12.503,
+        "ratio": 1.2504250425042505,
+        "dmm": "overflow"
+    },
+    "U05-BS-005": {
+        "index": "BS-005",
+        "area": 114.759,
+        "width": 10.0,
+        "height": 12.04,
+        "ratio": 1.204,
+        "dmm": "overflow"
+    },
+    "U06-BS-006": {
+        "index": "BS-006",
+        "area": 128.061,
+        "width": 14.0,
+        "height": 10.837,
+        "ratio": 0.7740714285714285,
+        "dmm": "overflow"
+    },
+    "U07-BS-007": {
+        "index": "BS-007",
+        "area": 125.482,
+        "width": 13.108,
+        "height": 10.0,
+        "ratio": 0.7628928898382666,
+        "dmm": "overflow"
+    },
+    "U08-BS-008": {
+        "index": "BS-008",
+        "area": 100.0,
+        "width": 10.0,
+        "height": 10.0,
+        "ratio": 1.0,
+        "dmm": "overflow"
+    },
+    "U09-BS-009": {
+        "index": "BS-009",
+        "area": 99.996,
+        "width": 9.999,
+        "height": 10.0,
+        "ratio": 1.000100010001,
+        "dmm": "overflow"
+    },
+    "U10-BS-010": {
+        "index": "BS-010",
+        "area": 99.997,
+        "width": 9.999,
+        "height": 10.0,
+        "ratio": 1.000100010001,
+        "dmm": "overflow"
+    },
+    "U11-BS-011": {
+        "index": "BS-011",
+        "area": 100.0,
+        "width": 10.0,
+        "height": 10.0,
+        "ratio": 1.0,
+        "dmm": "overflow"
+    },
+    "U12-BS-012": {
+        "index": "BS-012",
+        "area": 125.481,
+        "width": 13.108,
+        "height": 10.0,
+        "ratio": 0.7628928898382666,
+        "dmm": "overflow"
+    },
+    "U13-BS-013": {
+        "index": "BS-013",
+        "area": 86.76,
+        "width": 11.988,
+        "height": 7.5,
+        "ratio": 0.6256256256256256,
+        "dmm": "overflow"
+    },
+    "U14-BS-014": {
+        "index": "BS-014",
+        "area": 75.0,
+        "width": 10.0,
+        "height": 7.5,
+        "ratio": 0.75,
+        "dmm": "overflow"
+    },
+    "U15-BS-015": {
+        "index": "BS-015",
+        "area": 74.997,
+        "width": 9.999,
+        "height": 7.5,
+        "ratio": 0.7500750075007501,
+        "dmm": "overflow"
+    },
+    "U16-BS-016": {
+        "index": "BS-016",
+        "area": 74.997,
+        "width": 9.999,
+        "height": 7.5,
+        "ratio": 0.7500750075007501,
+        "dmm": "overflow"
+    },
+    "U17-BS-017": {
+        "index": "BS-017",
+        "area": 75.0,
+        "width": 10.0,
+        "height": 7.5,
+        "ratio": 0.75,
+        "dmm": "overflow"
+    },
+    "U18-BS-018": {
+        "index": "BS-018",
+        "area": 86.761,
+        "width": 11.988,
+        "height": 7.5,
+        "ratio": 0.6256256256256256,
+        "dmm": "overflow"
+    },
+    "U19-BS-019": {
+        "index": "BS-019",
+        "area": 105.88,
+        "width": 11.148,
+        "height": 10.0,
+        "ratio": 0.897021887334051,
+        "dmm": "overflow"
+    },
+    "U20-BS-020": {
+        "index": "BS-020",
+        "area": 100.0,
+        "width": 10.0,
+        "height": 10.0,
+        "ratio": 1.0,
+        "dmm": "overflow"
+    },
+    "U21-BS-021": {
+        "index": "BS-021",
+        "area": 99.997,
+        "width": 9.999,
+        "height": 10.0,
+        "ratio": 1.000100010001,
+        "dmm": "overflow"
+    },
+    "U22-BS-022": {
+        "index": "BS-022",
+        "area": 99.996,
+        "width": 9.999,
+        "height": 10.0,
+        "ratio": 1.000100010001,
+        "dmm": "overflow"
+    },
+    "U23-BS-023": {
+        "index": "BS-023",
+        "area": 100.0,
+        "width": 10.0,
+        "height": 10.0,
+        "ratio": 1.0,
+        "dmm": "overflow"
+    },
+    "U24-BS-024": {
+        "index": "BS-024",
+        "area": 105.883,
+        "width": 11.148,
+        "height": 10.0,
+        "ratio": 0.897021887334051,
+        "dmm": "overflow"
+    },
+    "U25-BS-025": {
+        "index": "BS-025",
+        "area": 107.917,
+        "width": 10.028,
+        "height": 11.5,
+        "ratio": 1.146788990825688,
+        "dmm": "overflow"
+    },
+    "U26-BS-026": {
+        "index": "BS-026",
+        "area": 115.0,
+        "width": 10.0,
+        "height": 11.5,
+        "ratio": 1.15,
+        "dmm": "overflow"
+    },
+    "U27-BS-027": {
+        "index": "BS-027",
+        "area": 114.996,
+        "width": 9.999,
+        "height": 11.5,
+        "ratio": 1.15011501150115,
+        "dmm": "overflow"
+    },
+    "U28-BS-028": {
+        "index": "BS-028",
+        "area": 114.996,
+        "width": 9.999,
+        "height": 11.5,
+        "ratio": 1.15011501150115,
+        "dmm": "overflow"
+    },
+    "U29-BS-029": {
+        "index": "BS-029",
+        "area": 115.0,
+        "width": 10.0,
+        "height": 11.5,
+        "ratio": 1.15,
+        "dmm": "overflow"
+    },
+    "U30-BS-030": {
+        "index": "BS-030",
+        "area": 107.92,
+        "width": 10.028,
+        "height": 11.5,
+        "ratio": 1.146788990825688,
+        "dmm": "overflow"
+    },
+    "U31-BS-031": {
+        "index": "BS-031",
+        "area": 81.801,
+        "width": 8.74,
+        "height": 10.0,
+        "ratio": 1.1441647597254003,
+        "dmm": "overflow"
+    },
+    "U32-BS-032": {
+        "index": "BS-032",
+        "area": 100.0,
+        "width": 10.0,
+        "height": 10.0,
+        "ratio": 1.0,
+        "dmm": "overflow"
+    },
+    "U33-BS-033": {
+        "index": "BS-033",
+        "area": 99.997,
+        "width": 9.999,
+        "height": 10.0,
+        "ratio": 1.000100010001,
+        "dmm": "overflow"
+    },
+    "U34-BS-034": {
+        "index": "BS-034",
+        "area": 99.996,
+        "width": 9.999,
+        "height": 10.0,
+        "ratio": 1.000100010001,
+        "dmm": "overflow"
+    },
+    "U35-BS-035": {
+        "index": "BS-035",
+        "area": 100.001,
+        "width": 10.0,
+        "height": 10.0,
+        "ratio": 1.0,
+        "dmm": "overflow"
+    },
+    "U36-BS-036": {
+        "index": "BS-036",
+        "area": 81.803,
+        "width": 8.74,
+        "height": 10.0,
+        "ratio": 1.1441647597254003,
+        "dmm": "overflow"
+    },
+    "U37-BS-037": {
+        "index": "BS-037",
+        "area": 70.6,
+        "width": 7.62,
+        "height": 10.0,
+        "ratio": 1.3123359580052494,
+        "dmm": "overflow"
+    },
+    "U38-BS-038": {
+        "index": "BS-038",
+        "area": 100.0,
+        "width": 10.0,
+        "height": 10.0,
+        "ratio": 1.0,
+        "dmm": "overflow"
+    },
+    "U39-BS-039": {
+        "index": "BS-039",
+        "area": 99.997,
+        "width": 9.999,
+        "height": 10.0,
+        "ratio": 1.000100010001,
+        "dmm": "overflow"
+    },
+    "U40-BS-040": {
+        "index": "BS-040",
+        "area": 99.996,
+        "width": 9.999,
+        "height": 10.0,
+        "ratio": 1.000100010001,
+        "dmm": "overflow"
+    },
+    "U41-BS-041": {
+        "index": "BS-041",
+        "area": 100.001,
+        "width": 10.0,
+        "height": 10.0,
+        "ratio": 1.0,
+        "dmm": "overflow"
+    },
+    "U42-BS-042": {
+        "index": "BS-042",
+        "area": 70.603,
+        "width": 7.62,
+        "height": 10.0,
+        "ratio": 1.3123359580052494,
+        "dmm": "overflow"
+    },
+    "U43-BS-043": {
+        "index": "BS-043",
+        "area": 65.0,
+        "width": 6.5,
+        "height": 10.0,
+        "ratio": 1.5384615384615385,
+        "dmm": "overflow"
+    },
+    "U44-BS-044": {
+        "index": "BS-044",
+        "area": 100.0,
+        "width": 10.0,
+        "height": 10.0,
+        "ratio": 1.0,
+        "dmm": "overflow"
+    },
+    "U45-BS-045": {
+        "index": "BS-045",
+        "area": 99.998,
+        "width": 9.999,
+        "height": 10.0,
+        "ratio": 1.000100010001,
+        "dmm": "overflow"
+    },
+    "U46-BS-046": {
+        "index": "BS-046",
+        "area": 99.997,
+        "width": 9.999,
+        "height": 10.0,
+        "ratio": 1.000100010001,
+        "dmm": "overflow"
+    },
+    "U47-BS-047": {
+        "index": "BS-047",
+        "area": 100.0,
+        "width": 10.0,
+        "height": 10.0,
+        "ratio": 1.0,
+        "dmm": "overflow"
+    },
+    "U48-BS-048": {
+        "index": "BS-048",
+        "area": 65.004,
+        "width": 6.5,
+        "height": 10.0,
+        "ratio": 1.5384615384615385,
+        "dmm": "overflow"
+    },
+    "U49-BS-049": {
+        "index": "BS-049",
+        "area": 65.0,
+        "width": 6.5,
+        "height": 10.0,
+        "ratio": 1.5384615384615385,
+        "dmm": "overflow"
+    },
+    "U50-BS-050": {
+        "index": "BS-050",
+        "area": 100.0,
+        "width": 10.0,
+        "height": 10.0,
+        "ratio": 1.0,
+        "dmm": "overflow"
+    },
+    "U51-BS-051": {
+        "index": "BS-051",
+        "area": 99.998,
+        "width": 9.999,
+        "height": 10.0,
+        "ratio": 1.000100010001,
+        "dmm": "overflow"
+    },
+    "U52-BS-052": {
+        "index": "BS-052",
+        "area": 99.998,
+        "width": 9.999,
+        "height": 10.0,
+        "ratio": 1.000100010001,
+        "dmm": "overflow"
+    },
+    "U53-BS-053": {
+        "index": "BS-053",
+        "area": 100.0,
+        "width": 10.0,
+        "height": 10.0,
+        "ratio": 1.0,
+        "dmm": "overflow"
+    },
+    "U54-BS-054": {
+        "index": "BS-054",
+        "area": 65.003,
+        "width": 6.5,
+        "height": 10.0,
+        "ratio": 1.5384615384615385,
+        "dmm": "overflow"
+    },
+    "U55-BS-055": {
+        "index": "BS-055",
+        "area": 65.0,
+        "width": 6.5,
+        "height": 10.0,
+        "ratio": 1.5384615384615385,
+        "dmm": "overflow"
+    },
+    "U56-BS-056": {
+        "index": "BS-056",
+        "area": 100.0,
+        "width": 10.0,
+        "height": 10.0,
+        "ratio": 1.0,
+        "dmm": "overflow"
+    },
+    "U57-BS-057": {
+        "index": "BS-057",
+        "area": 99.998,
+        "width": 9.999,
+        "height": 10.0,
+        "ratio": 1.000100010001,
+        "dmm": "overflow"
+    },
+    "U58-BS-058": {
+        "index": "BS-058",
+        "area": 99.998,
+        "width": 9.999,
+        "height": 10.0,
+        "ratio": 1.000100010001,
+        "dmm": "overflow"
+    },
+    "U59-BS-059": {
+        "index": "BS-059",
+        "area": 100.0,
+        "width": 10.0,
+        "height": 10.0,
+        "ratio": 1.0,
+        "dmm": "overflow"
+    },
+    "U60-BS-060": {
+        "index": "BS-060",
+        "area": 65.003,
+        "width": 6.5,
+        "height": 10.0,
+        "ratio": 1.5384615384615385,
+        "dmm": "overflow"
+    },
+    "U61-BS-061": {
+        "index": "BS-061",
+        "area": 64.999,
+        "width": 6.5,
+        "height": 9.999,
+        "ratio": 1.5383076923076924,
+        "dmm": "overflow"
+    },
+    "U62-BS-062": {
+        "index": "BS-062",
+        "area": 99.998,
+        "width": 10.0,
+        "height": 9.999,
+        "ratio": 0.9999,
+        "dmm": "overflow"
+    },
+    "U63-BS-063": {
+        "index": "BS-063",
+        "area": 99.997,
+        "width": 9.999,
+        "height": 9.999,
+        "ratio": 1.0,
+        "dmm": "overflow"
+    },
+    "U64-BS-064": {
+        "index": "BS-064",
+        "area": 99.998,
+        "width": 9.999,
+        "height": 9.999,
+        "ratio": 1.0,
+        "dmm": "overflow"
+    },
+    "U65-BS-065": {
+        "index": "BS-065",
+        "area": 99.998,
+        "width": 10.0,
+        "height": 9.999,
+        "ratio": 0.9999,
+        "dmm": "overflow"
+    },
+    "U66-BS-066": {
+        "index": "BS-066",
+        "area": 65.002,
+        "width": 6.5,
+        "height": 9.999,
+        "ratio": 1.5383076923076924,
+        "dmm": "overflow"
+    },
+    "U67-BS-067": {
+        "index": "BS-067",
+        "area": 65.0,
+        "width": 6.5,
+        "height": 10.0,
+        "ratio": 1.5384615384615385,
+        "dmm": "overflow"
+    },
+    "U68-BS-068": {
+        "index": "BS-068",
+        "area": 100.0,
+        "width": 10.0,
+        "height": 10.0,
+        "ratio": 1.0,
+        "dmm": "overflow"
+    },
+    "U69-BS-069": {
+        "index": "BS-069",
+        "area": 99.998,
+        "width": 9.999,
+        "height": 10.0,
+        "ratio": 1.000100010001,
+        "dmm": "overflow"
+    },
+    "U70-BS-070": {
+        "index": "BS-070",
+        "area": 99.998,
+        "width": 10.0,
+        "height": 10.0,
+        "ratio": 1.0,
+        "dmm": "overflow"
+    },
+    "U71-BS-071": {
+        "index": "BS-071",
+        "area": 100.0,
+        "width": 10.0,
+        "height": 10.0,
+        "ratio": 1.0,
+        "dmm": "overflow"
+    },
+    "U72-BS-072": {
+        "index": "BS-072",
+        "area": 65.002,
+        "width": 6.5,
+        "height": 10.0,
+        "ratio": 1.5384615384615385,
+        "dmm": "overflow"
+    },
+    "U73-BS-073": {
+        "index": "BS-073",
+        "area": 65.0,
+        "width": 6.5,
+        "height": 10.0,
+        "ratio": 1.5384615384615385,
+        "dmm": "overflow"
+    },
+    "U74-BS-074": {
+        "index": "BS-074",
+        "area": 100.0,
+        "width": 10.0,
+        "height": 10.0,
+        "ratio": 1.0,
+        "dmm": "overflow"
+    },
+    "U75-BS-075": {
+        "index": "BS-075",
+        "area": 99.999,
+        "width": 9.999,
+        "height": 10.0,
+        "ratio": 1.000100010001,
+        "dmm": "overflow"
+    },
+    "U76-BS-076": {
+        "index": "BS-076",
+        "area": 99.998,
+        "width": 9.999,
+        "height": 10.0,
+        "ratio": 1.000100010001,
+        "dmm": "overflow"
+    },
+    "U77-BS-077": {
+        "index": "BS-077",
+        "area": 100.0,
+        "width": 10.0,
+        "height": 10.0,
+        "ratio": 1.0,
+        "dmm": "overflow"
+    },
+    "U78-BS-078": {
+        "index": "BS-078",
+        "area": 65.001,
+        "width": 6.5,
+        "height": 10.0,
+        "ratio": 1.5384615384615385,
+        "dmm": "overflow"
+    },
+    "U79-BS-079": {
+        "index": "BS-079",
+        "area": 65.0,
+        "width": 6.5,
+        "height": 10.0,
+        "ratio": 1.5384615384615385,
+        "dmm": "overflow"
+    },
+    "U80-BS-080": {
+        "index": "BS-080",
+        "area": 100.0,
+        "width": 10.0,
+        "height": 10.0,
+        "ratio": 1.0,
+        "dmm": "overflow"
+    },
+    "U81-BS-081": {
+        "index": "BS-081",
+        "area": 99.999,
+        "width": 9.999,
+        "height": 10.0,
+        "ratio": 1.000100010001,
+        "dmm": "overflow"
+    },
+    "U82-BS-082": {
+        "index": "BS-082",
+        "area": 99.998,
+        "width": 9.999,
+        "height": 10.0,
+        "ratio": 1.000100010001,
+        "dmm": "overflow"
+    },
+    "U83-BS-083": {
+        "index": "BS-083",
+        "area": 100.0,
+        "width": 10.0,
+        "height": 10.0,
+        "ratio": 1.0,
+        "dmm": "overflow"
+    },
+    "U84-BS-084": {
+        "index": "BS-084",
+        "area": 65.001,
+        "width": 6.5,
+        "height": 10.0,
+        "ratio": 1.5384615384615385,
+        "dmm": "overflow"
+    },
+    "U85-BS-085": {
+        "index": "BS-085",
+        "area": 65.0,
+        "width": 6.5,
+        "height": 10.0,
+        "ratio": 1.5384615384615385,
+        "dmm": "overflow"
+    },
+    "U86-BS-086": {
+        "index": "BS-086",
+        "area": 100.0,
+        "width": 10.0,
+        "height": 10.0,
+        "ratio": 1.0,
+        "dmm": "overflow"
+    },
+    "U87-BS-087": {
+        "index": "BS-087",
+        "area": 99.999,
+        "width": 9.999,
+        "height": 10.0,
+        "ratio": 1.000100010001,
+        "dmm": "overflow"
+    },
+    "U88-BS-088": {
+        "index": "BS-088",
+        "area": 99.999,
+        "width": 9.999,
+        "height": 10.0,
+        "ratio": 1.000100010001,
+        "dmm": "overflow"
+    },
+    "U89-BS-089": {
+        "index": "BS-089",
+        "area": 100.0,
+        "width": 10.0,
+        "height": 10.0,
+        "ratio": 1.0,
+        "dmm": "overflow"
+    },
+    "U90-BS-090": {
+        "index": "BS-090",
+        "area": 65.001,
+        "width": 6.5,
+        "height": 10.0,
+        "ratio": 1.5384615384615385,
+        "dmm": "overflow"
+    },
+    "U91-BS-091": {
+        "index": "BS-091",
+        "area": 65.0,
+        "width": 6.5,
+        "height": 10.0,
+        "ratio": 1.5384615384615385,
+        "dmm": "overflow"
+    },
+    "U92-BS-092": {
+        "index": "BS-092",
+        "area": 100.0,
+        "width": 10.0,
+        "height": 10.0,
+        "ratio": 1.0,
+        "dmm": "overflow"
+    },
+    "U93-BS-093": {
+        "index": "BS-093",
+        "area": 99.999,
+        "width": 9.999,
+        "height": 10.0,
+        "ratio": 1.000100010001,
+        "dmm": "overflow"
+    },
+    "U94-BS-094": {
+        "index": "BS-094",
+        "area": 99.999,
+        "width": 9.999,
+        "height": 10.0,
+        "ratio": 1.000100010001,
+        "dmm": "overflow"
+    },
+    "U95-BS-095": {
+        "index": "BS-095",
+        "area": 100.0,
+        "width": 10.0,
+        "height": 10.0,
+        "ratio": 1.0,
+        "dmm": "overflow"
+    },
+    "U96-BS-096": {
+        "index": "BS-096",
+        "area": 65.001,
+        "width": 6.5,
+        "height": 10.0,
+        "ratio": 1.5384615384615385,
+        "dmm": "overflow"
+    },
+    "U97-BS-097": {
+        "index": "BS-097",
+        "area": 86.97,
+        "width": 6.5,
+        "height": 13.38,
+        "ratio": 2.058461538461539,
+        "dmm": "overflow"
+    },
+    "U98-BS-098": {
+        "index": "BS-098",
+        "area": 133.8,
+        "width": 10.0,
+        "height": 13.38,
+        "ratio": 1.338,
+        "dmm": "overflow"
+    },
+    "U99-BS-099": {
+        "index": "BS-099",
+        "area": 133.799,
+        "width": 10.0,
+        "height": 13.38,
+        "ratio": 1.338,
+        "dmm": "overflow"
+    },
+    "U100-BS-100": {
+        "index": "BS-100",
+        "area": 133.8,
+        "width": 10.0,
+        "height": 13.38,
+        "ratio": 1.338,
+        "dmm": "overflow"
+    },
+    "U101-BS-101": {
+        "index": "BS-101",
+        "area": 133.8,
+        "width": 10.0,
+        "height": 13.38,
+        "ratio": 1.338,
+        "dmm": "overflow"
+    },
+    "U102-BS-102": {
+        "index": "BS-102",
+        "area": 86.97,
+        "width": 6.5,
+        "height": 13.38,
+        "ratio": 2.058461538461539,
+        "dmm": "overflow"
+    },
+    "U103-BS-103": {
+        "index": "BS-103",
+        "area": 906.587,
+        "width": 53.0,
+        "height": 17.846,
+        "ratio": 0.3367169811320755,
+        "dmm": "overflow"
+    },
+    "U01-DC-001": {
+        "index": "DC-001",
+        "area": 16.73,
+        "width": 4.9,
+        "height": 3.9,
+        "ratio": 0.7959183673469387,
+        "dmm": "DamFloor"
+    },
+    "U02-DC-002": {
+        "index": "DC-002",
+        "area": 27.5,
+        "width": 9.2,
+        "height": 3.1,
+        "ratio": 0.3369565217391305,
+        "dmm": "DamFloor"
+    },
+    "U03-DC-003": {
+        "index": "DC-003",
+        "area": 27.76,
+        "width": 9.1,
+        "height": 3.2,
+        "ratio": 0.3516483516483517,
+        "dmm": "DamFloor"
+    },
+    "U04-DC-004": {
+        "index": "DC-004",
+        "area": 28.519,
+        "width": 9.2,
+        "height": 3.2,
+        "ratio": 0.3478260869565218,
+        "dmm": "DamFloor"
+    },
+    "U05-DC-005": {
+        "index": "DC-005",
+        "area": 28.98,
+        "width": 9.2,
+        "height": 3.2,
+        "ratio": 0.3478260869565218,
+        "dmm": "DamFloor"
+    },
+    "U06-DC-006": {
+        "index": "DC-006",
+        "area": 30.494,
+        "width": 9.199,
+        "height": 3.9,
+        "ratio": 0.4239591259919556,
+        "dmm": "DamFloor"
+    },
+    "U01-US-001": {
+        "index": "US-001",
+        "area": 19.895,
+        "width": 5.1,
+        "height": 5.8,
+        "ratio": 1.1372549019607843,
+        "dmm": "UpStream"
+    },
+    "U02-US-002": {
+        "index": "US-002",
+        "area": 30.16,
+        "width": 5.2,
+        "height": 5.8,
+        "ratio": 1.1153846153846154,
+        "dmm": "UpStream"
+    },
+    "U03-US-003": {
+        "index": "US-003",
+        "area": 30.739,
+        "width": 5.299,
+        "height": 5.8,
+        "ratio": 1.0945461407812793,
+        "dmm": "UpStream"
+    },
+    "U04-US-004": {
+        "index": "US-004",
+        "area": 30.16,
+        "width": 5.2,
+        "height": 5.8,
+        "ratio": 1.1153846153846154,
+        "dmm": "UpStream"
+    },
+    "U05-US-005": {
+        "index": "US-005",
+        "area": 29.0,
+        "width": 5.0,
+        "height": 5.8,
+        "ratio": 1.16,
+        "dmm": "UpStream"
+    },
+    "U06-US-006": {
+        "index": "US-006",
+        "area": 17.889,
+        "width": 3.599,
+        "height": 5.8,
+        "ratio": 1.6115587663239788,
+        "dmm": "UpStream"
+    },
+    "U01-DS-001": {
+        "index": "DS-001",
+        "area": 19.345,
+        "width": 6.0,
+        "height": 4.6,
+        "ratio": 0.7666666666666666,
+        "dmm": "DownStream"
+    },
+    "U02-DS-002": {
+        "index": "DS-002",
+        "area": 26.845,
+        "width": 5.9,
+        "height": 4.6,
+        "ratio": 0.7796610169491525,
+        "dmm": "DownStream"
+    },
+    "U03-DS-003": {
+        "index": "DS-003",
+        "area": 27.599,
+        "width": 5.999,
+        "height": 4.6,
+        "ratio": 0.7667944657442907,
+        "dmm": "DownStream"
+    },
+    "U04-DS-004": {
+        "index": "DS-004",
+        "area": 27.14,
+        "width": 5.9,
+        "height": 4.6,
+        "ratio": 0.7796610169491525,
+        "dmm": "DownStream"
+    },
+    "U05-DS-005": {
+        "index": "DS-005",
+        "area": 26.304,
+        "width": 5.699,
+        "height": 4.699,
+        "ratio": 0.8245306194069135,
+        "dmm": "DownStream"
+    },
+    "U06-DS-006": {
+        "index": "DS-006",
+        "area": 12.49,
+        "width": 3.2,
+        "height": 4.6,
+        "ratio": 1.4374999999999998,
+        "dmm": "DownStream"
+    },
+    "U07-DS-007": {
+        "index": "DS-007",
+        "area": 10.965,
+        "width": 4.3,
+        "height": 5.1,
+        "ratio": 1.1860465116279069,
+        "dmm": "DownStream"
+    },
+    "U08-DS-008": {
+        "index": "DS-008",
+        "area": 32.645,
+        "width": 5.9,
+        "height": 5.6,
+        "ratio": 0.9491525423728813,
+        "dmm": "DownStream"
+    },
+    "U09-DS-009": {
+        "index": "DS-009",
+        "area": 33.899,
+        "width": 5.999,
+        "height": 5.7,
+        "ratio": 0.9501583597266212,
+        "dmm": "DownStream"
+    },
+    "U10-DS-010": {
+        "index": "DS-010",
+        "area": 33.64,
+        "width": 5.9,
+        "height": 5.8,
+        "ratio": 0.983050847457627,
+        "dmm": "DownStream"
+    },
+    "U11-DS-011": {
+        "index": "DS-011",
+        "area": 30.935,
+        "width": 5.8,
+        "height": 5.9,
+        "ratio": 1.017241379310345,
+        "dmm": "DownStream"
+    },
+    "U12-DS-012": {
+        "index": "DS-012",
+        "area": 5.749,
+        "width": 2.3,
+        "height": 3.6,
+        "ratio": 1.565217391304348,
+        "dmm": "DownStream"
+    },
+    "U13-DS-013": {
+        "index": "DS-013",
+        "area": 15.9,
+        "width": 5.5,
+        "height": 4.899,
+        "ratio": 0.8907272727272727,
+        "dmm": "DownStream"
+    },
+    "U14-DS-014": {
+        "index": "DS-014",
+        "area": 26.97,
+        "width": 5.999,
+        "height": 4.7,
+        "ratio": 0.7834639106517753,
+        "dmm": "DownStream"
+    },
+    "U15-DS-015": {
+        "index": "DS-015",
+        "area": 29.279,
+        "width": 5.899,
+        "height": 5.6,
+        "ratio": 0.9493134429564333,
+        "dmm": "DownStream"
+    },
+    "U16-DS-016": {
+        "index": "DS-016",
+        "area": 9.44,
+        "width": 3.699,
+        "height": 5.5,
+        "ratio": 1.4868883482022168,
+        "dmm": "DownStream"
+    }
+}
