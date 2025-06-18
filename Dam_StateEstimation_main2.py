@@ -23,6 +23,14 @@ import glob
 
 import shutil
 
+ 
+"""
+    상태평가 보고서 생성기 
+    
+    2단계와 3단계 보고서 파일 생성용도 모듈
+    
+    계산식은 모두  DamFloor_StateEstimation에서 작업 DefectTableUseTotal에서 보고서에 들어갈 등급생성 csv 작성
+"""
 
 class Win32COMCacheManager:
     def __init__(self):
