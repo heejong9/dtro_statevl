@@ -1,0 +1,75 @@
+{
+    "images": [
+        {
+            "id": 1,
+            "width": 1918,
+            "height": 599,
+            "file_name": "ST1_WB_SI_MERGE_0046.jpg"
+        }
+    ],
+    "annotations": [
+        {
+            "id": 1,
+            "image_id": 1,
+            "category_id": 3,
+            "segmentation": [
+                [
+                    1298,
+                    286,
+                    1298,
+                    301,
+                    1309,
+                    301,
+                    1309,
+                    297,
+                    1310,
+                    296,
+                    1313,
+                    296,
+                    1313,
+                    293,
+                    1310,
+                    293,
+                    1309,
+                    292,
+                    1309,
+                    291,
+                    1308,
+                    290,
+                    1308,
+                    286
+                ]
+            ],
+            "bbox": [
+                1298.0,
+                286.0,
+                15.0,
+                15.0
+            ],
+            "area": 173.5,
+            "iscrowd": 0
+        }
+    ],
+    "categories": [
+        {
+            "id": 1,
+            "name": "crack"
+        },
+        {
+            "id": 2,
+            "name": "damage"
+        },
+        {
+            "id": 3,
+            "name": "etc"
+        },
+        {
+            "id": 4,
+            "name": "arc_horn"
+        },
+        {
+            "id": 5,
+            "name": "delamination"
+        }
+    ]
+}

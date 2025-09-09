@@ -1,0 +1,33 @@
+{
+    "images": [
+        {
+            "id": 1,
+            "width": 1842,
+            "height": 576,
+            "file_name": "ST1_WB_SI_MERGE_0021.jpg"
+        }
+    ],
+    "annotations": [],
+    "categories": [
+        {
+            "id": 1,
+            "name": "crack"
+        },
+        {
+            "id": 2,
+            "name": "damage"
+        },
+        {
+            "id": 3,
+            "name": "etc"
+        },
+        {
+            "id": 4,
+            "name": "arc_horn"
+        },
+        {
+            "id": 5,
+            "name": "delamination"
+        }
+    ]
+}

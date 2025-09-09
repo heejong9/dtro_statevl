@@ -1,0 +1,33 @@
+{
+    "images": [
+        {
+            "id": 1,
+            "width": 3706,
+            "height": 654,
+            "file_name": "ST1_AJR_HCL_UP_LU_MERGE_0002.jpg"
+        }
+    ],
+    "annotations": [],
+    "categories": [
+        {
+            "id": 1,
+            "name": "crack"
+        },
+        {
+            "id": 2,
+            "name": "damage"
+        },
+        {
+            "id": 3,
+            "name": "etc"
+        },
+        {
+            "id": 4,
+            "name": "arc_horn"
+        },
+        {
+            "id": 5,
+            "name": "delamination"
+        }
+    ]
+}

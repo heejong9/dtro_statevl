@@ -1,4 +1,7 @@
 
 # 
 *.conf
+*.txt
 /StateEstimator/
+/DamProject/
+

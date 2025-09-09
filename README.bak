@@ -1,0 +1,48 @@
+# 상태평가 등급 생성기
+- 이 스크립트는 댐 부재의 상태 평가 등급 (1단계 및 1.5단계) 을 생성하는 데 사용됩니다. 모든 계산 로직은 DamFloor_StateEstimation 모듈에 포함되어 있습니다.
+
+## 🚀 시작하기
+### 📋 전제 조건
+- 한글(Hancom) 설치 필수
+- 한글 컨트용 보안승인 모듈 등록
+    - 레지스트리 편집기 > 컴퓨터\HKEY_CURRENT_USER\Software\HNC\HwpAutomation\Modules > FilePathCheckerModule 이라는 이름으로 Automation폴더 안에 있는 DLL 파일 등록
+- 한글 오토메이션용 보안승인 모듈 등록
+
+![alt text](image.png)
+
+### ⚙️ 설치
+
+```bash
+    pip install pandas
+    pip install pywin32
+```
+
+### 💡 사용법
+이 스크립트는 명령줄 인수를 통해 실행됩니다.
+**Dam_StateEstimation_main.py**
+python Dam_StateEstimation_main.py --measure-csv <측정_결과_CSV_파일> --output-path <출력_경로> --dam <댐_이름> --bujea <부재_이름> --attribute <부재_속성> --shotingday <촬영_날짜> --mainpath <메인_경로>
+
+```bash
+    python "E:\Git_Project\대구교통공사_stateHWP\Dam_StateEstimation_main.py"   --measure-csv "E:\Git_Project\대구교통공사_stateHWP\DamProject\07MYD\20250507\stage07\075_YSR\YSR.csv" --output-path "E:\Git_Project\대구교통공사_stateHWP\DamProject\07MYD\20250507\stage08\085_YSR" --dam "07MYD" --bujea "YSR" --attribute "C" --mainpath "E:\Git_Project\대구교통공사_stateHWP\DamProject" --shotingday "20250507" --config "E:\Git_Project\대구교통공사_stateHWP\DamConfigFile\07MYD_YSR.conf" --estimatorPath "E:\Git_Project\대구교통공사_stateHWP\DamReportImg\07MYD\YSR"
+```
+**Dam_StateEstimation_main2.py**
+python Dam_StateEstimation_main2.py --measure-csv <측정_결과_CSV_파일> --output-path <출력_경로> --dam <댐_이름> --bujea <부재_이름> --attribute <부재_속성> --mainpath <메인_경로> --shotingday <촬영_날짜> --config <댐_기본정보_파일_경로> --estimatorPath <보고서_이미지_경로>
+```bash
+    python "E:\Git_Project\stateHWP\Dam_StateEstimation_main2.py"   --measure-csv "E:\Git_Project\stateHWP\DamProject\07MYD\20250507\stage07\075_YSR\YSR.csv" --output-path "E:\Git_Project\stateHWP\DamProject\07MYD\20250507\stage08\085_YSR" --dam "07MYD" --bujea "YSR" --attribute "C" --mainpath "E:\Git_Project\stateHWP\DamProject" --shotingday "20250507" --config "E:\Git_Project\stateHWP\DamConfigFile\07MYD_YSR.conf" --estimatorPath "E:\Git_Project\stateHWP\DamReportImg\07MYD\YSR"
+```
+
+### ➡️ 인수 설명
+--measure-csv: 결함 검출 결과가 포함된 CSV 파일의 경로입니다. (기본값: ./SYD/YSR.csv)  
+--output-path: 상태 등급 결과 파일이 저장될 출력 디렉토리 경로입니다. (기본값: 241007)  
+--dam: 상태평가 보고서 작성용 댐 이름입니다. (예: 27SYD)  
+--bujea: 평가할 부재의 이름입니다. (예: YSR)  
+--attribute: 부재의 속성입니다.  
+    C: 콘크리트 (Concrete)  
+    F: 필 (Fill)  
+    D: 대청댐 (Daecheong Dam) - 콘크리트 및 필 속성 모두 포함  
+--shotingday: 촬영 날짜입니다. (예: 20250106)  
+--mainpath: 이미지 및 기타 관련 파일이 저장된 메인 경로입니다.  
+
+```bash
+    python main.py --measure-csv ./data/27SYD-YSR.csv --output-path ./results --dam 27SYD --bujea YSR --attribute C --shotingday 20240101 --mainpath /path/to/your/storage
+```
