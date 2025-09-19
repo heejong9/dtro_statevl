@@ -34,17 +34,22 @@
 **dtro_condition_report.py**
 
 ```bash
-    python dtro_condition_report.py --root-dir "e:/Git_Project/대구교통공사_stateHWP/INSULATOR"  --project-id 3  --script-dir "e:/Git_Project/대구교통공사_stateHWP"
+    python dtro_condition_report.py --root-dir "e:/Git_Project/대구교통공사_stateHWP/INSULATOR"  --project-id 5  --script-dir "e:/Git_Project/대구교통공사_stateHWP"
+```
+```bash
+    python dtro_condition_report.py --root-dir "E:\1_GIT\DTRO_INSULATOR_2\stateHWP\INSULATOR"  --project-id 5
 ```
 
 **dtro_dtl_statevl.py**
 
+
 ```bash
-    python e:/Git_Project/대구교통공사_stateHWP/dtro_dtl_statevl.py --root-dir "e:/Git_Project/대구교통공사_stateHWP/INSULATOR" --project-id 3 --sub-project-id "ST3_MPY_PSS"
+    python dtro_dtl_statevl.py --root-dir "E:\1_GIT\DTRO_INSULATOR_2\stateHWP\INSULATOR" --project-id 5 --sub-project-id "ST1_SOH_SBJ"
 ```
 
 **dtro_total_statevl.py**
 
+
 ```bash
-    C:/Python313/python.exe e:/Git_Project/대구교통공사_stateHWP/dtro_total_statevl.py --root-dir "e:/Git_Project/대구교통공사_stateHWP/INSULATOR" --project-id 3
+    python dtro_total_statevl.py --root-dir "E:\1_GIT\DTRO_INSULATOR_2\stateHWP\INSULATOR" --project-id 5
 ```

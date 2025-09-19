@@ -6,38 +6,46 @@ from datetime import date, datetime
 import pandas as pd
 import win32com.client as win32
 from PIL import Image
-import mysql.connector
 import argparse
+import db_config
 
 
 # DB에서 데이터 추출
+STATION_MAP = {}
+STATION_ORDER = {}
+
 def fetch_data_from_db(project_id):
-    connection = mysql.connector.connect(
-        host="127.0.0.1",
-        port=10645,
-        user="deepinspector",
-        password="xoaud17!@",
-        database="db_deepinspector"
-    )
+    connection = db_config.connect_db()
     cursor = connection.cursor(dictionary=True)
 
     # 1) 프로젝트 설정값 가져오기
-    cursor.execute("""
-        SELECT SETTING_VALUE, PROJECT_ID_DESC_EN
+    cursor.execute(
+        """
+        SELECT SETTING_VALUE, PROJECT_ID_DESC_KR, PROJECT_ID_DESC_EN
         FROM PROJECT
         WHERE PROJECT_ID = %s;
-    """, (project_id,))
+    """,
+        (project_id,),
+    )
     row = cursor.fetchone()
+    project_id_desc_kr = row["PROJECT_ID_DESC_KR"]
     project_id_desc_en = row["PROJECT_ID_DESC_EN"]
-    setting_value = json.loads(row["SETTING_VALUE"]) if row and row.get("SETTING_VALUE") else {}
+    setting_value = (
+        json.loads(row["SETTING_VALUE"]) if row and row.get("SETTING_VALUE") else {}
+    )
 
     # 2) 결함 정보 가져오기
     query_defects = """
         SELECT 
+            DDI.DEFECT_DETECT_ID,
             DDI.IMAGE_NUM,
-            DDID.TYPE AS DEFECT_TYPE
-        FROM DEFECT_DETECT_IMAGE_DETAIL AS DDID
-        JOIN DEFECT_DETECT_IMAGE AS DDI
+            DDID.TYPE AS DEFECT_TYPE,
+            DDI.DEFECT_IMAGE_EXIST_LEFT_UP    AS LEFT_UP_EXIST,
+            DDI.DEFECT_IMAGE_EXIST_RIGHT_UP   AS RIGHT_UP_EXIST,
+            DDI.DEFECT_IMAGE_EXIST_LEFT_DOWN  AS LEFT_DOWN_EXIST,
+            DDI.DEFECT_IMAGE_EXIST_RIGHT_DOWN AS RIGHT_DOWN_EXIST
+        FROM DEFECT_DETECT_IMAGE AS DDI
+        LEFT JOIN DEFECT_DETECT_IMAGE_DETAIL AS DDID
             ON DDID.DEFECT_DETECT_IMAGE_ID = DDI.DEFECT_DETECT_IMAGE_ID
         JOIN DEFECT_DETECT AS DD
             ON DDI.DEFECT_DETECT_ID = DD.DEFECT_DETECT_ID
@@ -46,21 +54,45 @@ def fetch_data_from_db(project_id):
     """
     cursor.execute(query_defects, (project_id,))
     defect_rows = cursor.fetchall()
+
+    insulator_count = """
+        SELECT DDI.DEFECT_DETECT_ID, COUNT(*) AS INS_CNT
+        FROM DEFECT_DETECT_IMAGE AS DDI
+        JOIN DEFECT_DETECT AS DD
+        ON DDI.DEFECT_DETECT_ID = DD.DEFECT_DETECT_ID
+        WHERE DD.PROJECT_ID = %s
+        GROUP BY DDI.DEFECT_DETECT_ID
+    """
+    cursor.execute(insulator_count, (project_id,))
+    cnt_rows = cursor.fetchall()
+    detect_count_by_id = {r["DEFECT_DETECT_ID"]: int(r["INS_CNT"]) for r in cnt_rows}
+
     # 3) 역 정보 가져오기
     cursor.execute("SELECT INITIAL, NAME, LINE, STATION_ORDER FROM SUBWAY_STATIONS;")
     station_rows = cursor.fetchall()
+    global STATION_MAP, STATION_ORDER
     STATION_MAP = {r["INITIAL"]: r["NAME"] for r in station_rows}
-    STATION_ORDER = {(row["LINE"], row["INITIAL"]): int(row["STATION_ORDER"]) for row in station_rows}
+    STATION_ORDER = {
+        (row["LINE"], row["INITIAL"]): int(row["STATION_ORDER"]) for row in station_rows
+    }
+
     cursor.close()
     connection.close()
 
     # === 한글명 매핑 변환 ===
     DEFECT_TYPE_MAP = {
+        "Crack": "균열",
+        "Damage": "파손",
+        "ArchornPeeling": "아크혼_박리",
+        "ArchornScorching": "아크혼_그을음",
+        "Stain": "얼룩",
         "crack": "균열",
         "damaged": "파손",
+        "damage": "파손",
         "archorn_peeling": "아크혼_박리",
         "archorn_soot": "아크혼_그을음",
         "stain": "얼룩",
+        "etc": "기타결함",
     }
     LINE_MAP = {"ST1": "1호선", "ST2": "2호선", "ST3": "3호선"}
 
@@ -70,76 +102,77 @@ def fetch_data_from_db(project_id):
         # IMAGE_NUM 파싱
         parts = (r["IMAGE_NUM"] or "").split("_")
         if len(parts) >= 5:
-            line, from_init, to_init, direction, detect ,ins_no = parts
+            line, from_init, to_init, direction, defect, ins_no = parts
             r["LINE_KR"] = LINE_MAP.get(line, line)
             r["FROM_STATION"] = STATION_MAP.get(from_init, from_init)
             r["TO_STATION"] = STATION_MAP.get(to_init, to_init)
             r["FROM_ORDER"] = STATION_ORDER.get((line, from_init), 10**9)
-            r["TO_ORDER"]   = STATION_ORDER.get((line, to_init),   10**9)
-            r["DIRECTION"] = "상행" if direction.upper() == "UP" else ("하행" if direction.upper() == "DOWN" else direction) #상행/하행
+            r["TO_ORDER"] = STATION_ORDER.get((line, to_init), 10**9)
+            r["DIRECTION"] = (
+                "상행"
+                if direction.upper() == "UP"
+                else ("하행" if direction.upper() == "DOWN" else direction)
+            )  # 상행/하행
             r["INSULATOR_NO"] = str(int(ins_no))  # "0001" -> "1"
-            r["SUB_PROJECT_ID"] = "_".join(parts[:-2]) # "ST1_AAA_BBB_UP" -> "ST1_AAA_BBB"
-            r["SUBPROJECT_KR"] = f"{r['FROM_STATION']}~{r['TO_STATION']}({r['DIRECTION']})" # "화원~대곡(상행)"
-    # 애자 개수 맵 ( setting value 중에서 value의 키가 dictionary이면서, 키가 INSULATOR_COUNT인 값만 고름)
-    subproject_insulator_counts = {
-        k: v["INSULATOR_COUNT"]
-        for k, v in setting_value.items() if isinstance(v, dict) and "INSULATOR_COUNT" in v
-    }
+            r["SUB_PROJECT_ID"] = "_".join(
+                parts[:-2]
+            )  # "ST1_AAA_BBB_UP" -> "ST1_AAA_BBB"
+            r["SUBPROJECT_KR"] = (
+                f"{r['FROM_STATION']}~{r['TO_STATION']}({r['DIRECTION']})"  # "화원~대곡(상행)"
+            )
+
+    # 애자 개수 맵 
+    from collections import defaultdict
+
+    # 보고서에 등장하는 모든 SUB_PROJECT_ID
+    wanted_subprojects = {r.get("SUB_PROJECT_ID") for r in defect_rows if r.get("SUB_PROJECT_ID")}
+
+    # SUB_PROJECT_ID -> DEFECT_DETECT_ID 집합
+    subproject_to_detect_ids = defaultdict(set)
+    for r in defect_rows:
+        sp  = r.get("SUB_PROJECT_ID")
+        did = r.get("DEFECT_DETECT_ID")
+        if sp and did:
+            subproject_to_detect_ids[sp].add(did)
+
+    # 최종 개수 산출(여러 detect가 섞인 경우 보수적으로 최댓값 사용)
+    subproject_insulator_counts = {}
+    for sp in sorted(wanted_subprojects):
+        detect_ids = subproject_to_detect_ids.get(sp, set())
+        if not detect_ids:
+            continue
+        subproject_insulator_counts[sp] = max(
+            detect_count_by_id.get(did, 0) for did in detect_ids
+        )
+
 
     # ====== 표지 메타 구성 ======
-    # 1) 호선명(line_name)
-    line_name = None
-    if defect_rows and "LINE_KR" in defect_rows[0]:
-        # 최빈값
-        lines = [r.get("LINE_KR") for r in defect_rows if r.get("LINE_KR")]
-        if lines:
-            # 최빈값 추출
-            line_counts = {}
-            for ln in lines:
-                line_counts[ln] = line_counts.get(ln, 0) + 1
-            line_name = max(line_counts.items(), key=lambda x: x[1])[0]
-    if not line_name:
-        # setting key에서 STx 하나 골라 매핑
-        codes = [k.split("_")[0] for k in setting_value.keys() if k.startswith("ST")]
-        code = codes[0] if codes else "ST2"
-        line_name = LINE_MAP.get(code, code)
+    # PROECT_ID_DESC_KR  1호선(월배~상인) 에서 가져오기
+    project_id_desc_kr = project_id_desc_kr.strip()
 
-    # 2) 전체 구간(section_core): settings.subwaySection 우선
-    if setting_value.get("subwaySection"):
-        section_core = setting_value["subwaySection"].strip()
+    # "1호선" / "월배~상인" 분리
+    if "(" in project_id_desc_kr and ")" in project_id_desc_kr:
+        line_name = project_id_desc_kr.split("(")[0]  # 1호선
+        section_core = project_id_desc_kr.split("(")[1].rstrip(")")  # 월배~상인
     else:
-        # defect_rows에서 SUBPROJECT_KR 정렬 후 [첫 시작역 ~ 마지막 도착역]
-        if defect_rows:
-            df = pd.DataFrame(defect_rows)
-            if not df.empty and "SUBPROJECT_KR" in df.columns:
-                df["START_ORDER"] = df[["FROM_ORDER", "TO_ORDER"]].min(axis=1)
-                df["END_ORDER"]   = df[["FROM_ORDER", "TO_ORDER"]].max(axis=1)
-                order = (
-                    df[["SUB_PROJECT_ID", "SUBPROJECT_KR", "LINE_KR", "START_ORDER", "END_ORDER"]]
-                    .drop_duplicates()
-                    .sort_values(["LINE_KR", "START_ORDER", "END_ORDER"])
-                )
-                if not order.empty:
-                    first = order.iloc[0]["SUBPROJECT_KR"]  # "만평~팔달시장(상행)"
-                    last  = order.iloc[-1]["SUBPROJECT_KR"]
-                    start = first.split("~")[0].strip()
-                    end   = last.split("~")[1].split("(")[0].strip()
-                    section_core = f"{start} ~ {end}"
-                else:
-                    section_core = "구간미상"
-            else:
-                section_core = "구간미상"
-        else:
-            section_core = "구간미상"
+        line_name = project_id_desc_kr
+        section_core = ""
+
+    # 시작/끝역 따로 추출
+    if "~" in section_core:
+        from_station, to_station = [s.strip() for s in section_core.split("~", 1)]
+    else:
+        from_station, to_station = section_core, section_core
 
     # 3) 표지 필드들
-    facility_name  = setting_value.get("facilityName", "")
+    facility_name = setting_value.get("facilityName", "")
     managed_number = setting_value.get("managedNumber", "")
-    inspector_raw  = setting_value.get("inspector", "")
-    inspector      = ", ".join([x.strip() for x in inspector_raw.split(",") if x.strip()])
-    approver       = setting_value.get("approver", "")
-    writer         = "Deep Inspector(AI 안전점검 프로그램)"
-    written_date   = date.today().strftime("%Y년 %m월 %d일")
+    inspector_raw = setting_value.get("inspector", "")
+    inspector = ", ".join([x.strip() for x in inspector_raw.split(",") if x.strip()])
+    approver = setting_value.get("approver", "")
+    camera_mode = setting_value.get("cameraMode", "")
+    writer = "Deep Inspector(AI 안전점검 프로그램)"
+    written_date = date.today().strftime("%Y년 %m월 %d일")
 
     # 4) 제목 라인 (대괄호 표기)
     # 예: 대구 지하철 [2]호선 [수성알파시티] ~ [정평] 상태평가 보고서
@@ -155,16 +188,20 @@ def fetch_data_from_db(project_id):
         "facility_name": facility_name,
         "managed_number": managed_number,
         "written_date": written_date,
-        "place": f"{line_name} {section_core}",   # 검사장소
+        "place": f"{line_name} {section_core}",  # 검사장소
         "inspector": inspector,
+        "camera_mode": camera_mode,
         "writer": writer,
         "approver": approver,
         "line_name": line_name,
         "section_core": section_core,
         "project_id_desc_en": project_id_desc_en,
+        "from_station": from_station,
+        "to_station": to_station,
     }
 
     return cover_meta, subproject_insulator_counts, defect_rows
+
 
 def init_hwp(visible=True):
     """
@@ -180,14 +217,15 @@ def init_hwp(visible=True):
     hwp.RegisterModule("FilePathCheckDLL", "FilePathCheckerModule")
     return hwp
 
+
 def makeHwp(root_dir, project_id):
-    
     """
     ================================
              기본 동작 정의
     ================================
     """
-    def 글자속성(font_size=11, bold=False):
+
+    def 글자속성(font_size=11, bold=False, color=None):
         hwp.HAction.GetDefault("CharShape", hwp.HParameterSet.HCharShape.HSet)
         hwp.HParameterSet.HCharShape.HSet.SetItem(
             "Bold", 1 if bold else 0
@@ -225,6 +263,12 @@ def makeHwp(root_dir, project_id):
         hwp.HParameterSet.HCharShape.FontTypeHangul = hwp.FontType(
             "TTF"
         )  # 글자모양 - 폰트타입
+
+        if color:
+            if color.lower() == "red":
+                hwp.HParameterSet.HCharShape.TextColor = hwp.RGBColor(255, 0, 0)
+            elif color.lower() == "black":
+                hwp.HParameterSet.HCharShape.TextColor = hwp.RGBColor(0, 0, 0)
 
         hwp.HParameterSet.HCharShape.SizeUser = 100  # 글자모양 - 상대크기%
         hwp.HParameterSet.HCharShape.SizeSymbol = 100  # 글자모양 - 상대크기%
@@ -284,7 +328,7 @@ def makeHwp(root_dir, project_id):
         hwp.HParameterSet.HParaShape.LeftMargin = number * 100 * 2
         hwp.HAction.Execute("ParagraphShape", hwp.HParameterSet.HParaShape.HSet)
 
-    def 클립보드로_이미지_삽입(filepath, width, height ):
+    def 클립보드로_이미지_삽입(filepath, width, height):
         """
         한/글 API의 InsertPicture 메서드는
         셀의 크기를 변경하지 않는 반면(이미지가 찌그러짐)
@@ -329,13 +373,15 @@ def makeHwp(root_dir, project_id):
     def createTable(rows, cols):
         # 테이블 생성
         hwp.HAction.GetDefault("TableCreate", hwp.HParameterSet.HTableCreation.HSet)
-        
+
         max_width = 16  # 최대 테이블 폭 (단위: HWP 내부 단위)
 
         # HTableCreation 파라미터 설정
         hwp.HParameterSet.HTableCreation.Rows = rows
         hwp.HParameterSet.HTableCreation.Cols = cols
-        hwp.HParameterSet.HTableCreation.WidthType = max_width/cols  # 테이블 폭을 열 수에 맞게 균등 분할
+        hwp.HParameterSet.HTableCreation.WidthType = (
+            max_width / cols
+        )  # 테이블 폭을 열 수에 맞게 균등 분할
         hwp.HParameterSet.HTableCreation.HeightType = 0
         hwp.HParameterSet.HTableCreation.WidthValue = 0.0
         hwp.HParameterSet.HTableCreation.HeightValue = 0.0
@@ -363,174 +409,382 @@ def makeHwp(root_dir, project_id):
         # 아래로 줄이기
         for _ in range(down_count):
             hwp.HAction.Run("TableResizeExDown")
-    
+
+    # 표 2,3,4 전용 표
+    def resizeTable2(hwp, left_count=0, up_count=0):
+        """
+        표 셀 블록 확장 후 크기 조정
+        - extend는 반드시 2번 실행
+        - left_count: TableResizeExLeft 실행 횟수
+        - down_count: TableResizeExDown 실행 횟수
+        """
+        # 블록 확장 (2번 고정)
+        hwp.HAction.Run("TableCellBlockExtendAbs")
+        hwp.HAction.Run("TableCellBlockExtend")
+
+        # 왼쪽으로 줄이기
+        for _ in range(left_count):
+            hwp.HAction.Run("TableResizeExLeft")
+
+        # 위로 줄이기
+        for _ in range(up_count):
+            hwp.HAction.Run("TableResizeExUp")
+
     """
     ========================================
             대구교통공사 전용 동작 정의
     ========================================
     """
-    def get_insulator_defect_summary(project_id):
-        # DB에서 데이터 가져오기
-        _, insulator_count_map, defect_rows = fetch_data_from_db(project_id)
 
-        # DataFrame 변환
+    def get_insulator_defect_summary(project_id):
+        # DB에서 데이터 가져오기 (전체 sub_project 대상)
+        cover_meta, insulator_count_map, defect_rows = fetch_data_from_db(project_id)
+        camera_mode = str(cover_meta.get("camera_mode", "2CH")).upper()
         df = pd.DataFrame(defect_rows)
 
         df["START_ORDER"] = df[["FROM_ORDER", "TO_ORDER"]].min(axis=1)
-        df["END_ORDER"]   = df[["FROM_ORDER", "TO_ORDER"]].max(axis=1)
+        df["END_ORDER"] = df[["FROM_ORDER", "TO_ORDER"]].max(axis=1)
 
-        # 구간별( SUB_PROJECT_ID ) 대표 정렬키 뽑기
+        # SUB_PROJECT 정렬용 인덱스
         order_df = (
             df[["SUB_PROJECT_ID", "LINE_KR", "START_ORDER", "END_ORDER"]]
             .drop_duplicates()
             .sort_values(["LINE_KR", "START_ORDER", "END_ORDER"])
-        )  # ST3_MPY_PSS_DOWN 3호선 1 2 
-        # 정렬 인덱스 맵: SUB_PROJECT_ID 순서
+        )
         order_idx = {sp: i for i, sp in enumerate(order_df["SUB_PROJECT_ID"].tolist())}
 
         # 주요/주의 결함 분류
-        major_defects = {"균열", "파손"}  # 교체 필요
-        caution_defects = {"얼룩", "아크혼_박리", "아크혼_그을음"}  # 주의 필요
+        major_defects = {"균열", "파손"}
+        caution_defects = {"얼룩", "아크혼_박리", "아크혼_그을음", "기타결함"}
 
-        # 결과 저장용 리스트
+        # 촬영불가지역 라벨 정의
+        if camera_mode == "2CH":
+            NOT_FIND_LABELS = [
+                ("LEFT_DOWN_EXIST", "좌하단 촬영불가지역"),
+                ("RIGHT_DOWN_EXIST", "우하단 촬영불가지역"),
+            ]
+            MAJOR_ORDER = ["균열", "파손", "좌하단 촬영불가지역", "우하단 촬영불가지역"]
+            CAUTION_ORDER = ["아크혼_박리", "아크혼_그을음", "얼룩", "기타결함"]
+        else:
+            NOT_FIND_LABELS = [
+                ("LEFT_UP_EXIST", "좌상단 촬영불가지역"),
+                ("RIGHT_UP_EXIST", "우상단 촬영불가지역"),
+                ("LEFT_DOWN_EXIST", "좌하단 촬영불가지역"),
+                ("RIGHT_DOWN_EXIST", "우하단 촬영불가지역"),
+            ]
+            MAJOR_ORDER = [
+                "균열",
+                "파손",
+                "좌상단 촬영불가지역",
+                "우상단 촬영불가지역",
+                "좌하단 촬영불가지역",
+                "우하단 촬영불가지역",
+            ]
+            CAUTION_ORDER = ["아크혼_박리", "아크혼_그을음", "얼룩", "기타결함"]
+
         report_rows = []
 
-        # 전체 서브프로젝트이름, 애자 갯수로 반복문
+        # 전체 sub_project 순회
         for sub_project, total_count in sorted(
-        insulator_count_map.items(),
-        key=lambda kv: order_idx.get(kv[0], 10**9)):
-
-            # 현재 루프에 해당하는 구간만 필터링
+            insulator_count_map.items(), key=lambda kv: subproject_sort_key(kv[0])
+        ):
             df_sub = df[df["SUB_PROJECT_ID"] == sub_project]
 
-            # 구간 이름 한글로 가져오기
             if not df_sub.empty:
-                subproject_kr = df_sub.iloc[0]["SUBPROJECT_KR"]
+                from_station = df_sub["FROM_STATION"].iloc[0]
+                to_station = df_sub["TO_STATION"].iloc[0]
+                direction_code = sub_project.split("_")[-1].upper()
+                direction_map = {"UP": "상행", "DOWN": "하행"}
+                direction_kr = direction_map.get(direction_code, direction_code)
+                subproject_kr = f"{from_station}~{to_station}({direction_kr})"
             else:
-                # 결함이 하나도 없는 경우: IMAGE_NUM 기반으로 기본 텍스트 생성
+                # fallback
                 parts = sub_project.split("_")
-                if len(parts) >= 4:
-                    from_init, to_init, direction = parts[1:4]
-                    direction_map = {"UP": "상행", "DOWN": "하행"}
-                    from_station = from_init 
-                    to_station = to_init
-                    direction_kr = direction_map.get(direction.upper(), direction)
-                    subproject_kr = f"{from_station}~{to_station}({direction_kr})"
-                else:
-                    subproject_kr = sub_project
+                direction = parts[3] if len(parts) > 3 else ""
+                direction_map = {"UP": "상행", "DOWN": "하행"}
+                from_station = cover_meta.get(
+                    "from_station", parts[1] if len(parts) > 1 else ""
+                )
+                to_station = cover_meta.get(
+                    "to_station", parts[2] if len(parts) > 2 else ""
+                )
+                direction_kr = direction_map.get(direction.upper(), direction)
+                subproject_kr = f"{from_station}~{to_station}({direction_kr})"
 
-            replace_list = []
-            caution_list = []
+            majors_map = defaultdict(set)
+            cautions_map = defaultdict(set)
 
-            # 결함 집계
-            for ins_no in df_sub["INSULATOR_NO"].unique():
-                defects = df_sub[df_sub["INSULATOR_NO"] == ins_no]["DEFECT_TYPE_KR"].unique()
-                if len(defects) == 0:
-                    continue
+            def _to_int_no(x):
+                return int(str(x).lstrip("0") or "0")
 
-                defects_str = ", ".join(defects)
-                ins_str = f"#{ins_no}({defects_str})"
+            for ins_no in sorted(df_sub["INSULATOR_NO"].unique(), key=_to_int_no):
+                mask = df_sub["INSULATOR_NO"] == ins_no
+                dset = set(df_sub.loc[mask, "DEFECT_TYPE_KR"].tolist())
+                ins_num = _to_int_no(ins_no)
 
-                if any(d in major_defects for d in defects):
-                    replace_list.append(ins_str)
-                elif any(d in caution_defects for d in defects):
-                    caution_list.append(ins_str)
+                for d in dset:
+                    if d in major_defects:
+                        majors_map[d].add(ins_num)
+                    if d in caution_defects:
+                        cautions_map[d].add(ins_num)
 
-            # 점검결과 / 비고 텍스트
-            replace_text = "교체 필요 애자: " + ", ".join(replace_list) if replace_list else "정상상태"
-            caution_text = "주의 필요 애자: " + ", ".join(caution_list) if caution_list else "정상상태"
+                cols = [
+                    "LEFT_UP_EXIST",
+                    "RIGHT_UP_EXIST",
+                    "LEFT_DOWN_EXIST",
+                    "RIGHT_DOWN_EXIST",
+                ]
+                sub_flags = (
+                    df_sub.loc[mask, cols]
+                    .astype(str)
+                    .apply(lambda s: s.str.upper().fillna("N"))
+                )
+                for col, label in NOT_FIND_LABELS:
+                    if (sub_flags[col] == "N").any():
+                        majors_map[label].add(ins_num)
 
-            # 요약 행 추가
-            report_rows.append([
-                "지지물",
-                f"{subproject_kr} #1~#{total_count}",
-                "지지애자 손상여부",
-                "특이상태 점검/AI점검",
-                replace_text,
-                caution_text
-            ])
+            def _format_grouped(by_defect: dict, order_list: list) -> str:
+                if not by_defect:
+                    return "정상상태"
+                parts = []
+                ordered = [k for k in order_list if k in by_defect] + [
+                    k for k in sorted(by_defect.keys()) if k not in order_list
+                ]
+                for k in ordered:
+                    nums = ", ".join(f"#{n}" for n in sorted(by_defect[k]))
+                    parts.append(f"/{k}:/{nums}")
+                return "/".join(parts)
 
-        # DataFrame으로 변환
-        # "구분", "위치", "점검항목", "점검기준/점검방법", "점검결과", "비고"
+            major_text = _format_grouped(majors_map, MAJOR_ORDER)
+            caution_text = _format_grouped(cautions_map, CAUTION_ORDER)
+
+            report_rows.append(
+                [
+                    "지지물",
+                    f"{subproject_kr} #1~#{total_count}",
+                    "지지애자/손상여부",
+                    "특이상태 점검/AI점검",
+                    major_text,
+                    caution_text,
+                ]
+            )
+
         return report_rows
 
     def get_insulator_defect_details(project_id):
-        
-        print("get_insulator_defect_details called")
-        _, insulator_count_map, defect_rows = fetch_data_from_db(project_id)
-        df = pd.DataFrame(defect_rows)
-        print(df.head())
-        # STATION_ORDER 기반(라인/시작/끝) + 방향(UP→DOWN)까지 포함해 정렬키 생성
-        df["START_ORDER"] = df[["FROM_ORDER", "TO_ORDER"]].min(axis=1)
-        df["END_ORDER"]   = df[["FROM_ORDER", "TO_ORDER"]].max(axis=1)
+        # 전체 프로젝트 기준으로 조회 (sub_project_id 없음)
+        cover_meta, insulator_count_map, defect_rows = fetch_data_from_db(project_id)
+        camera_mode = str(cover_meta.get("camera_mode", "2CH")).upper()
 
-        # SUB_PROJECT_ID의 마지막 토큰으로 방향 추출 (예: ST3_MPY_PSS_UP -> UP)
-        df["DIR_CODE"]  = df["SUB_PROJECT_ID"].str.split("_").str[-1].str.upper()
-        print("dfDIR_CODE",df["DIR_CODE"])
+        df = pd.DataFrame(defect_rows)
+
+        # 누락 방어(아래 컬럼 없을 수도 있으니 기본 생성)
+        for col in ["FROM_ORDER", "TO_ORDER"]:
+            if col not in df.columns:
+                df[col] = 10**9
+
+        # 정렬 키
+        df["START_ORDER"] = df[["FROM_ORDER", "TO_ORDER"]].min(axis=1)
+        df["END_ORDER"] = df[["FROM_ORDER", "TO_ORDER"]].max(axis=1)
+        df["DIR_CODE"] = df["SUB_PROJECT_ID"].str.split("_").str[-1].str.upper()
         df["DIR_ORDER"] = df["DIR_CODE"].map({"UP": 0, "DOWN": 1}).fillna(2).astype(int)
 
         order = (
-            df[["SUB_PROJECT_ID", "SUBPROJECT_KR", "LINE_KR", "START_ORDER", "END_ORDER", "DIR_ORDER"]]
+            df[
+                [
+                    "SUB_PROJECT_ID",
+                    "SUBPROJECT_KR",
+                    "LINE_KR",
+                    "START_ORDER",
+                    "END_ORDER",
+                    "DIR_ORDER",
+                ]
+            ]
             .drop_duplicates()
             .sort_values(["LINE_KR", "START_ORDER", "END_ORDER", "DIR_ORDER"])
         )
 
-        major   = {"균열", "파손"}
-        archorns = {"아크혼(박리)", "아크혼(그을음)"}
-        stain   = "얼룩"
+        # SUB_PROJECT 정렬 인덱스 (결함이 하나도 없어 df에 안 잡힌 구간은 맨 뒤로)
+        order_idx = {sp: i for i, sp in enumerate(order["SUB_PROJECT_ID"].tolist())}
+
+        # 라벨/집합
+        majors_order = ["균열", "파손"]
+        minors_order = [
+            "얼룩",
+            "아크혼_박리",
+            "아크혼_그을음",
+            "기타결함",
+        ]  # 비고용(주의결함)
+
+        if camera_mode == "2CH":
+            notfind_cols = [
+                ("LEFT_DOWN_EXIST", "좌하단 촬영불가지역"),
+                ("RIGHT_DOWN_EXIST", "우하단 촬영불가지역"),
+            ]
+        else:
+            notfind_cols = [
+                ("LEFT_UP_EXIST", "좌상단 촬영불가지역"),
+                ("RIGHT_UP_EXIST", "우상단 촬영불가지역"),
+                ("LEFT_DOWN_EXIST", "좌하단 촬영불가지역"),
+                ("RIGHT_DOWN_EXIST", "우하단 촬영불가지역"),
+            ]
 
         rows = []
-        print("order",order)
-        for sub_project, subproject_kr in zip(order["SUB_PROJECT_ID"], order["SUBPROJECT_KR"]):
-            print("sub_project",sub_project)
-            print("insulator_count_map",insulator_count_map)
-            total = insulator_count_map.get(sub_project)
-            print(df["SUB_PROJECT_ID"])
-            print("total",total)
+
+        # 모든 서브프로젝트 순회 (정렬 고려)
+        for sub_project, total in sorted(
+            insulator_count_map.items(), key=lambda kv: subproject_sort_key(kv[0])
+        ):
             if not total:
-                print("not total")
                 continue
 
             df_sub = df[df["SUB_PROJECT_ID"] == sub_project]
-            print("df_sub",df_sub)
 
+            # 구간명 (df_sub이 비어도 안전하게 생성)
+            if not df_sub.empty and "SUBPROJECT_KR" in df_sub.columns:
+                subproject_kr = str(df_sub["SUBPROJECT_KR"].iloc[0])
+            else:
+                parts = sub_project.split("_")
+                if len(parts) >= 4:
+                    from_init, to_init, direction = parts[1], parts[2], parts[3]
+                    # initial -> 한글 변환 함수 사용 (이미 추가하신 함수)
+                    from_station = STATION_MAP[from_init]
+                    to_station = STATION_MAP[to_init]
+                    direction_kr = {"UP": "상행", "DOWN": "하행"}.get(
+                        str(direction).upper(), direction
+                    )
+                    subproject_kr = f"{from_station}~{to_station}({direction_kr})"
+                else:
+                    subproject_kr = sub_project
+
+            # 각 애자번호 1 ~ total 모두 출력 (정상만 있어도 반드시 행 생성) ← (문제 1 해결)
             for n in range(1, int(total) + 1):
-                df_one = df_sub[df_sub["INSULATOR_NO"] == str(n)]
-                defects = set(df_one["DEFECT_TYPE_KR"].tolist())
+                # 현재 애자 n의 결함/플래그 모으기
+                df_one = df_sub[df_sub["INSULATOR_NO"].astype(str) == str(n)]
+                defects = (
+                    set(df_one["DEFECT_TYPE_KR"].dropna().tolist())
+                    if "DEFECT_TYPE_KR" in df_one.columns
+                    else set()
+                )
 
-                major_found = sorted(list(defects & major))
-                if len(major_found) >= 2:
-                    result_text = "균열/파손 검출"
-                elif len(major_found) == 1:
-                    result_text = f"{major_found[0]} 검출"
+                # --- 주요/주의 결함 분리 (문제 3: 주요결함 있어도 비고에 주의결함 유지) ---
+                majors_found = [t for t in majors_order if t in defects]
+                minors_found = [t for t in minors_order if t in defects]
+
+                # --- 촬영불가지역 판단 (문제 2: 2CH/4CH 모두 처리) ---
+                notfind_found = []
+                if not df_one.empty and notfind_cols:
+                    cols_present = [c for c, _ in notfind_cols if c in df_one.columns]
+                    if cols_present:
+                        sub_flags = (
+                            df_one.reindex(columns=cols_present, fill_value=None)
+                            .astype(str)
+                            .apply(lambda s: s.str.upper().fillna("N"))
+                        )
+                        for col, label in notfind_cols:
+                            if (
+                                col in sub_flags.columns
+                                and (sub_flags[col] == "N").any()
+                            ):
+                                notfind_found.append(label)
+
+                # 좌/우하단 동시 촬영불가지역 → 하나로 합치기(요청 사항 반영)
+                if {"좌하단 촬영불가지역", "우하단 촬영불가지역"}.issubset(set(notfind_found)):
+                    notfind_found = [
+                        x
+                        for x in notfind_found
+                        if x not in {"좌하단 촬영불가지역", "우하단 촬영불가지역"}
+                    ]
+                    # 앞쪽에 배치
+                    notfind_found.insert(0, "좌·우하단 촬영불가지역")
+
+                # --- 결과 텍스트 조합(요청한 규칙) ---
+                if majors_found and notfind_found:
+                    result_text = (
+                        f"{'/'.join(majors_found)} 검출, {'/'.join(notfind_found)}"
+                    )
+                elif majors_found:
+                    result_text = f"{'/'.join(majors_found)} 검출"
+                elif notfind_found:
+                    # 촬영불가지역만 있는 경우: 규칙 적용
+                    if notfind_found == ["좌·우하단 촬영불가지역"]:
+                        result_text = "좌·우하단 촬영불가지역"
+                    elif len(notfind_found) == 1:
+                        result_text = f"정상상태, {notfind_found[0]}"
+                    else:
+                        result_text = " / ".join(notfind_found)
                 else:
                     result_text = "정상상태"
 
-                remarks = []
-                if defects & archorns:
-                    remarks.append("아크혼 검출")
-                if stain in defects:
-                    remarks.append("얼룩 검출")
-                remark_text = ", ".join(remarks)
+                # --- 비고(주의결함은 항상 표시) ---
+                remark_text = "/".join(minors_found) + " 검출" if minors_found else ""
 
+                # 위치
                 loc = f"{subproject_kr}\n#{n}"
-                print("loc",loc)
-                rows.append([
-                    "지지물",
-                    loc,
-                    "지지애자 손상여부",
-                    "특이상태 점검/AI점검",
-                    result_text,
-                    remark_text
-                ])
+
+                rows.append(
+                    [
+                        "지지물",
+                        loc,
+                        "지지애자 손상여부",
+                        "특이상태 점검/AI점검",
+                        result_text,
+                        remark_text,
+                    ]
+                )
 
         return rows
 
+    def insert_value_with_splits(value: object):
+        """'/'가 있으면 나눠서 사이에 개행 삽입"""
+        text = str(value)
+        parts = [p.strip() for p in text.split("/")]
+        if len(parts) <= 1:
+            insert_text(text)
+            return
+        # 첫 조각
+        insert_text(parts[0])
+        # 이후 조각들 앞에 개행 삽입
+        for p in parts[1:]:
+            hwp.HAction.Run("BreakPara")
+            insert_text(p)
+
+    def subproject_sort_key(sub_project_id: str):
+        """
+        정렬 우선순위:
+        1) 시작역 station_order (작은→큰)
+        2) 방향(UP=0, DOWN=1, 기타=2)
+        """
+        try:
+            parts = sub_project_id.split("_")
+            line_raw  = (parts[0] or "").strip()
+            from_init = (parts[1] or "").strip().upper()
+            to_init   = (parts[2] or "").strip().upper()
+            dir_code  = (parts[3] if len(parts) > 3 else "").strip().upper()
+        except Exception:
+            return (99, 10**9, 10**9, 2, sub_project_id)
+
+        # 라인 두 가지 키: (1) 정렬용 랭크, (2) STATION_ORDER 조회용
+        line_up = line_raw.upper().replace(" ", "")
+        line_rank = {"ST1": 1, "ST2": 2, "ST3": 3,
+                    "1호선": 1, "2호선": 2, "3호선": 3}.get(line_up, 99)
+        
+        s = (line_raw or "").strip()
+        up = s.upper().replace(" ", "")  # '3호 선' 같은 오타 방지
+        line_for_order = {"ST1": "1호선", "ST2": "2호선", "ST3": "3호선"}.get(up, s)
+
+        f = STATION_ORDER.get((line_for_order, from_init), 10**9)
+        t = STATION_ORDER.get((line_for_order, to_init),   10**9)
+
+        # 질문 요구: from(두 번째 토큰) 우선 정렬
+        dir_rank = 0 if dir_code == "UP" else (1 if dir_code == "DOWN" else 2)
+        return (line_rank, f, t, dir_rank, sub_project_id)
     """
     ========================================
             페이지 별 작성 함수
     ========================================
     """
+
     def 표지(meta):
 
         # 한글 문서에서 쪽 번호 위치 설정
@@ -555,12 +809,11 @@ def makeHwp(root_dir, project_id):
 
         # 글자 크기를 15으로 설정
         글자속성(15, True)
-        hwp.HAction.Run("ParagraphShapeAlignLeft") # 왼쪽 정렬
+        hwp.HAction.Run("ParagraphShapeAlignLeft")  # 왼쪽 정렬
 
         for i in range(0, 13):
             hwp.HAction.Run("BreakPara")
 
-        # 설비명
         insert_text(f"{'설비명':<6} : {meta['facility_name']}")
         hwp.HAction.Run("BreakPara")
 
@@ -601,7 +854,7 @@ def makeHwp(root_dir, project_id):
 
         hwp.HAction.Run("BreakPara")
         hwp.HAction.Run("BreakPara")
-        hwp.HAction.Run("ParagraphShapeAlignLeft") # 왼쪽 정렬
+        hwp.HAction.Run("ParagraphShapeAlignLeft")  # 왼쪽 정렬
         Set = hwp.HParameterSet.HParaShape
         hwp.HAction.GetDefault("ParagraphShape", Set.HSet)
         tab_def = Set.TabDef
@@ -626,27 +879,29 @@ def makeHwp(root_dir, project_id):
         hwp.HAction.Run("BreakPara")
 
         insert_text("  1.2 결함의 정의\t4")
-        hwp.HAction.Run("BreakPara")        
+        hwp.HAction.Run("BreakPara")
         insert_text("    가. 주요 결함\t4")
         hwp.HAction.Run("BreakPara")
-        insert_text("    가. 주의 결함\t4")
+        insert_text("    나. 주의 결함\t5")
+        hwp.HAction.Run("BreakPara")
+        insert_text("    다. 촬영 불가 지역\t5")
         hwp.HAction.Run("BreakPara")
 
         hwp.HAction.Run("BreakPara")
         글자속성(15, 1)
-        insert_text("2. 상태평가 결과\t5")
+        insert_text("2. 상태평가 결과\t6")
         hwp.HAction.Run("BreakPara")
 
         글자속성(15, 0)
-        insert_text("  2.1 상태평가 요약\t5")
+        insert_text("  2.1 상태평가 요약\t6")
         hwp.HAction.Run("BreakPara")
-        insert_text("  2.1 상태평가 상세내용\t6")
+        insert_text("  2.1 상태평가 상세내용\t7")
         hwp.HAction.Run("BreakPara")
-        
+
         hwp.Run("BreakPage")
 
-    def 상태평가범위():
-        hwp.HAction.Run("ParagraphShapeAlignLeft") # 왼쪽 정렬
+    def 상태평가기준(cover_meta):
+        hwp.HAction.Run("ParagraphShapeAlignLeft")  # 왼쪽 정렬
         글자속성(17, 1)
         insert_text("1. 상태평가 개요")
 
@@ -656,21 +911,35 @@ def makeHwp(root_dir, project_id):
         여백생성(8.3)
         글자속성(15, 1)
         insert_text("1.1 상태평가 기준")
-    
-        # hwp.Run("BreakPa")  # 페이지 나누기 삽입
         hwp.HAction.Run("BreakPara")
+        글자속성(12, 0)
         들여쓰기(0)
-        들여쓰기(1000)
-        text = "본 상태평가는 대구 지하철 [{{]2]호선 [수성알파시티역] ~ [정평역] 구간(상·하행 전 구간)을 대상으로 한다. 평가 대상은 전차선 지지물 중 지지애자로 한정하여 실시한다."
-        
+        들여쓰기(3000)
+        insert_text(
+            f"본 상태평가는 대구 지하철 {cover_meta['place']} 구간(상·하행 전 구간)을 대상으로 한다. 평가 대상은 전차선 지지물 중 지지애자로 한정하여 실시한다."
+        )
+
+        글자속성(13, 1)
         hwp.HAction.Run("BreakPara")
         insert_text("가. 점검방법")
 
         hwp.HAction.Run("BreakPara")
         여백생성(8.3)
-        글자속성(13, 0)
-        들여쓰기(2000)
-        insert_text("점검 방법 및 촬영 방법은 다음과 같다.")
+        글자속성(12, 0)
+        들여쓰기(4000)
+        if cover_meta["camera_mode"] == "2CH":
+            insert_text(
+                "본 점검은 대상 구간의 전차선 지지애자를 비접촉 촬영·분석 방식으로 수행한다. 좌/우 애자 하단 촬영용 카메라 2대와 애자번호 식별 보조 카메라 1대를 병행 사용한다."
+            )
+        elif cover_meta["camera_mode"] == "4CH":
+            insert_text(
+                "본 점검은 대상 구간의 전차선 지지애자를 비접촉 촬영·분석 방식으로 수행한다. 좌/우 애자 상/하단 촬영용 카메라 4대와 애자번호 식별 보조 카메라 1대를 병행 사용한다."
+            )
+        else:
+            insert_text(
+                "본 점검은 대상 구간의 전차선 지지애자를 비접촉 촬영·분석 방식으로 수행한다. 좌/우 애자 촬영용 카메라 2대(필요시 4대)와 애자번호 식별 보조 카메라 1대를 병행 사용한다."
+            )
+
         hwp.HAction.Run("BreakPara")
 
         hwp.HAction.Run("BreakPara")
@@ -678,7 +947,6 @@ def makeHwp(root_dir, project_id):
         글자속성(13, 1)
         hwp.HAction.Run("ParagraphShapeAlignCenter")
         insert_text(" [표1] 카메라 설치")
-        글자속성(10, 0)
 
         hwp.HAction.Run("BreakPara")
 
@@ -687,30 +955,30 @@ def makeHwp(root_dir, project_id):
              표1   
         ==============
         """
-        #time.sleep(1)
+        # time.sleep(1)
         createTable(2, 3)
 
-        클립보드로_이미지_삽입(os.path.join(os.getcwd(), "표1_그림1.png"),50.68,50.68)
+        클립보드로_이미지_삽입(os.path.join(os.getcwd(), "표1_그림1.png"), 50.68, 50.68)
         hwp.HAction.Run("TableRightCell")
-        클립보드로_이미지_삽입(os.path.join(os.getcwd(), "표1_그림2.png"),50.68,50.68)
+        클립보드로_이미지_삽입(os.path.join(os.getcwd(), "표1_그림2.png"), 50.68, 50.68)
         hwp.HAction.Run("TableRightCell")
-        클립보드로_이미지_삽입(os.path.join(os.getcwd(), "표1_그림3.png"),50.68,50.68)
+        클립보드로_이미지_삽입(os.path.join(os.getcwd(), "표1_그림3.png"), 50.68, 50.68)
 
         hwp.HAction.Run("TableRightCell")
         hwp.HAction.Run("ParagraphShapeAlignCenter")
-        글자속성(10, 0)
+        글자속성(12, 0)
         insert_text("애자 촬영용(좌) 카메라")
 
         hwp.HAction.Run("TableRightCell")
         hwp.HAction.Run("ParagraphShapeAlignCenter")
-        글자속성(10, 0)
+        글자속성(12, 0)
         insert_text("애자 촬영용(우) 카메라")
 
         hwp.HAction.Run("TableRightCell")
         hwp.HAction.Run("ParagraphShapeAlignCenter")
-        글자속성(10, 0)
+        글자속성(12, 0)
         insert_text("애자번호 식별용")
-        
+
         hwp.HAction.Run("Close")
         hwp.HAction.Run("MoveDocEnd")
 
@@ -721,7 +989,7 @@ def makeHwp(root_dir, project_id):
         """
         createTable(1, 1)
         hwp.HAction.Run("BreakPara")
-        클립보드로_이미지_삽입(  os.path.join(os.getcwd(),"그림1.png"),104.40,58.74)
+        클립보드로_이미지_삽입(os.path.join(os.getcwd(), "그림1.png"), 104.40, 58.74)
         hwp.HAction.Run("MoveRight")
         hwp.HAction.Run("BreakPara")
         hwp.HAction.Run("Close")
@@ -731,10 +999,11 @@ def makeHwp(root_dir, project_id):
         hwp.HAction.Run("ParagraphShapeAlignCenter")
         insert_text(" [그림1] 촬영현장")
         글자속성(10, 0)
+        hwp.HAction.Run("MoveDocEnd")
         hwp.Run("BreakPage")
-   
+
     def 결함의정의():
-        hwp.HAction.Run("ParagraphShapeAlignLeft") # 왼쪽 정렬
+        hwp.HAction.Run("ParagraphShapeAlignLeft")  # 왼쪽 정렬
 
         # --------------------------
         # 1.2 손상의 정의
@@ -744,33 +1013,37 @@ def makeHwp(root_dir, project_id):
         글자속성(15, 1)
         insert_text("1.2 결함의 정의")
         hwp.HAction.Run("BreakPara")
-        글자속성(10, 0)
-        들여쓰기(3000)
-        insert_text("지지애자의 결함은 다음과 같이 주요결함과 주의결함으로 나누어 평가한다.")
-        hwp.HAction.Run("BreakPara")
-
-        줄간격(180)
+        글자속성(12, 0)
         들여쓰기(0)
-        들여쓰기(1000)
-        글자속성(12, 1)
+        들여쓰기(3000)
+        insert_text(
+            "지지애자의 결함은 다음과 같이 주요결함과 주의결함으로 나누어 평가한다."
+        )
+        들여쓰기(0)
+        들여쓰기(2000)
+        hwp.HAction.Run("BreakPara")
+        글자속성(5, 0)
+        hwp.HAction.Run("BreakPara")
+        글자속성(13, 1)
         insert_text("가. 주요 결함")
+
         hwp.HAction.Run("BreakPara")
         여백생성(8.3)
-        글자속성(10, 0)
+        글자속성(12, 0)
         들여쓰기(2000)
         insert_text("지지애자를 교체해야하는 수준의 결함이다.")
         hwp.HAction.Run("BreakPara")
-        
-        #표2
-        글자속성(2, 1)
-        hwp.HAction.Run("ParagraphShapeAlignCenter")
+
+        # 표2
         hwp.HAction.Run("BreakPara")
+        줄간격(180)
         글자속성(13, 1)
+        hwp.HAction.Run("ParagraphShapeAlignCenter")
         insert_text(" [표2] 주요결함")
         글자속성(10, 0)
         createTable(3, 3)
 
-        #1열
+        # 1열
         hwp.HAction.Run("ParagraphShapeAlignCenter")
         insert_text("결함 종류")
         hwp.HAction.Run("TableRightCell")
@@ -779,8 +1052,8 @@ def makeHwp(root_dir, project_id):
         hwp.HAction.Run("TableRightCell")
         hwp.HAction.Run("ParagraphShapeAlignCenter")
         insert_text("예시 이미지")
-        
-        #2열
+
+        # 2열
         hwp.HAction.Run("TableRightCell")
         insert_text("균열")
         hwp.HAction.Run("BreakPara")
@@ -791,13 +1064,13 @@ def makeHwp(root_dir, project_id):
         insert_text("열팽창, 기계적 충격, 전기적 스트레스 등으로 발생할 수 있음.")
 
         hwp.HAction.Run("TableRightCell")
-        클립보드로_이미지_삽입( os.path.join(os.getcwd(),"표2_그림1.png"), 35 , 29.45 )
+        클립보드로_이미지_삽입(os.path.join(os.getcwd(), "표2_그림1.png"), 35, 29.45)
 
-        #3열
+        # 3열
         hwp.HAction.Run("TableRightCell")
         insert_text("파손")
         hwp.HAction.Run("BreakPara")
-        insert_text("(Damaged)")
+        insert_text("(Damage)")
 
         hwp.HAction.Run("TableRightCell")
         insert_text("애자 본체가 깨지거나 일부가 떨어져 나간 상태.")
@@ -805,27 +1078,31 @@ def makeHwp(root_dir, project_id):
         insert_text("과전압, 외부충격, 균열의 심화 등으로 발생할 수 있음.")
 
         hwp.HAction.Run("TableRightCell")
-        클립보드로_이미지_삽입( os.path.join(os.getcwd(),"표2_그림2.png"), 35 , 29.45 )
+        클립보드로_이미지_삽입(os.path.join(os.getcwd(), "표2_그림2.png"), 35, 29.45)
+        resizeTable2(hwp, left_count=2, up_count=10)
 
         # 표 종료
-        resizeTable(hwp, left_count=15, down_count=5)
         hwp.HAction.Run("Close")
-        글자속성(4, 0)
-        hwp.HAction.Run("BreakPara")
-        글자속성(10, 0)
+
+        # 페이지 넘어감
+        hwp.HAction.Run("MoveDocEnd")
+        hwp.Run("BreakPage")
+
         들여쓰기(0)
         들여쓰기(1000)
         hwp.HAction.Run("ParagraphShapeAlignLeft")
-        글자속성(12, 1)
+        글자속성(13, 1)
         insert_text("나. 주의 결함")
         hwp.HAction.Run("BreakPara")
         여백생성(8.3)
-        글자속성(10, 0)
+        글자속성(12, 0)
         들여쓰기(2000)
         insert_text("애자 교체가 불필요하나, 관찰이 필요한 결함이다.")
         hwp.HAction.Run("BreakPara")
-        
-        #표3
+
+        # 표3
+        글자속성(2, 0)
+        hwp.HAction.Run("BreakPara")
         글자속성(13, 1)
         hwp.HAction.Run("ParagraphShapeAlignCenter")
         글자속성(1, 0)
@@ -834,8 +1111,8 @@ def makeHwp(root_dir, project_id):
         insert_text(" [표3] 주의결함")
         글자속성(10, 0)
         createTable(4, 3)
-        
-        #1열
+
+        # 1열
         hwp.HAction.Run("ParagraphShapeAlignCenter")
         insert_text("결함 종류")
         hwp.HAction.Run("TableRightCell")
@@ -844,51 +1121,115 @@ def makeHwp(root_dir, project_id):
         hwp.HAction.Run("TableRightCell")
         hwp.HAction.Run("ParagraphShapeAlignCenter")
         insert_text("예시 이미지")
-        
-        #2열
+
+        # 2열
         hwp.HAction.Run("TableRightCell")
         insert_text("얼룩")
         hwp.HAction.Run("BreakPara")
-        insert_text("(stain)")
+        insert_text("(Stain)")
 
         hwp.HAction.Run("TableRightCell")
         insert_text("애자 표면에 먼지, 매연 등 오염 물질이 묻어 생기는 자국.")
 
         hwp.HAction.Run("TableRightCell")
-        클립보드로_이미지_삽입( os.path.join(os.getcwd(),"표3_그림1.png"), 35 , 29.45 )
-        
-        #3열
+        클립보드로_이미지_삽입(os.path.join(os.getcwd(), "표3_그림1.png"), 35, 29.45)
+
+        # 3열
         hwp.HAction.Run("TableRightCell")
         insert_text("아크혼(박리)")
         hwp.HAction.Run("BreakPara")
-        insert_text("(archorn_peeling)")
+        insert_text("(ArchornPeeling)")
 
         hwp.HAction.Run("TableRightCell")
-        insert_text("아크 방전이 발생하면서 애자의 표피가 분리되어 떨어지기 직전이거나 떨어진 상태.")
+        insert_text(
+            "아크 방전이 발생하면서 애자의 표피가 분리되어 떨어지기 직전이거나 떨어진 상태."
+        )
         hwp.HAction.Run("BreakPara")
         insert_text("아크 방전 시 발생하는 충격 등으로 발생할 수 있음.")
 
         hwp.HAction.Run("TableRightCell")
-        클립보드로_이미지_삽입( os.path.join(os.getcwd(),"표3_그림2.png"), 35 , 29.45 )
+        클립보드로_이미지_삽입(os.path.join(os.getcwd(), "표3_그림2.png"), 35, 29.45)
 
-        #4열
+        # 4열
         hwp.HAction.Run("TableRightCell")
         insert_text("아크혼(그을음)")
         hwp.HAction.Run("BreakPara")
-        insert_text("(archorn_soot)")
+        insert_text("(ArchornScorching)")
 
         hwp.HAction.Run("TableRightCell")
         insert_text("아크 방전이 발생하면서 생긴 그을림 자국.")
         hwp.HAction.Run("BreakPara")
-        insert_text("아크 방전 시 발생하는 고온과 연기로 아크혼 주변에 검게 탄 흔적이 남음.")
+        insert_text(
+            "아크 방전 시 발생하는 고온과 연기로 아크혼 주변에 검게 탄 흔적이 남음."
+        )
 
         hwp.HAction.Run("TableRightCell")
-        클립보드로_이미지_삽입( os.path.join(os.getcwd(),"표3_그림3.png"), 35 , 29.45 )
-
+        클립보드로_이미지_삽입(os.path.join(os.getcwd(), "표3_그림3.png"), 35, 29.45)
+        resizeTable2(hwp, left_count=2, up_count=10)
         # 표 종료
-        resizeTable(hwp, left_count=15, down_count=5)
         hwp.HAction.Run("Close")
         hwp.HAction.Run("BreakPara")
+
+        hwp.HAction.Run("ParagraphShapeAlignLeft")
+        글자속성(13, 1)
+        insert_text("다. 촬영 불가 지역")
+
+        hwp.HAction.Run("BreakPara")
+        여백생성(8.3)
+        글자속성(12, 0)
+        들여쓰기(2000)
+        insert_text(
+            "촬영 불가 지역은 촬영 작업은 수행되었으나 구조물·설비 및 안전시설 등으로 애자 본체가 가려져 영상에서 식별되지 않은 경우를 의미한다. 본 항목은 결함 유형이 아닌 판독 상태이며, 재촬영 또는 보완조치의 대상이다."
+        )
+        hwp.HAction.Run("BreakPara")
+        글자속성(2, 0)
+        # 표4
+        hwp.HAction.Run("BreakPara")
+        줄간격(180)
+        글자속성(13, 1)
+        hwp.HAction.Run("ParagraphShapeAlignCenter")
+        insert_text(" [표4] 촬영 불가 사유")
+        글자속성(10, 0)
+        createTable(3, 3)
+
+        # 1열
+        hwp.HAction.Run("ParagraphShapeAlignCenter")
+        insert_text("사유")
+        hwp.HAction.Run("TableRightCell")
+        hwp.HAction.Run("ParagraphShapeAlignCenter")
+        insert_text("설명")
+        hwp.HAction.Run("TableRightCell")
+        hwp.HAction.Run("ParagraphShapeAlignCenter")
+        insert_text("예시 이미지")
+
+        # 2열
+        hwp.HAction.Run("TableRightCell")
+        insert_text("가려짐")
+        hwp.HAction.Run("TableRightCell")
+        insert_text(
+            "타 구조물, 부속장치 또는 작업 여건 등으로 대상 애자가 시야에서 가려져 검출이 곤란한 경우."
+        )
+
+        hwp.HAction.Run("TableRightCell")
+        클립보드로_이미지_삽입(os.path.join(os.getcwd(), "표4_그림1.png"), 35, 29.45)
+
+        # 3열
+        hwp.HAction.Run("TableRightCell")
+        insert_text("완전 파손")
+
+        hwp.HAction.Run("TableRightCell")
+        insert_text(
+            "대상 애자가 전면적으로 파손되어 형상이 식별되지 않아 검출이 곤란한 경우."
+        )
+
+        hwp.HAction.Run("TableRightCell")
+        클립보드로_이미지_삽입(os.path.join(os.getcwd(), "표4_그림2.png"), 35, 29.45)
+        resizeTable2(hwp, left_count=2, up_count=10)
+
+        # 표 종료
+        hwp.HAction.Run("Close")
+
+        # 페이지 넘어감
         hwp.Run("BreakPage")
 
     def 상태평가요약(project_id):
@@ -932,7 +1273,19 @@ def makeHwp(root_dir, project_id):
         # --- 데이터 입력 ---
         for row in data_list:
             for col, value in enumerate(row):
-                insert_text(str(value))
+                if col in (4, 5):
+                    hwp.HAction.Run("ParagraphShapeAlignLeft")
+                    if col == 4:
+                        if (
+                            str(value).replace(" ", "") != "정상상태"
+                        ):  # 정상상태가 아니면 빨간색
+                            글자속성(10, 0, "red")
+                        else:
+                            글자속성(10, 0, "black")
+                    insert_value_with_splits(value)
+                else:
+                    insert_text(value)
+                글자속성(10, 0, "black")
                 if col < len(headers) - 1:
                     hwp.HAction.Run("TableRightCell")
             hwp.HAction.Run("TableAppendRow")
@@ -983,7 +1336,17 @@ def makeHwp(root_dir, project_id):
         # --- 데이터 입력 ---
         for row in data_list:
             for col, value in enumerate(row):
-                insert_text(str(value))
+                text_value = str(value)
+
+                if col == 4:  # 점검결과 컬럼
+                    if text_value.strip() == "정상상태":
+                        글자속성(10, 0, "black")
+                    else:
+                        글자속성(10, 0, "red")
+                    insert_text(text_value)
+                    글자속성(10, 0, "black")  # 다음 셀에 영향 안가게 초기화
+                else:
+                    insert_text(text_value)
                 if col < len(headers) - 1:
                     hwp.HAction.Run("TableRightCell")
             hwp.HAction.Run("TableAppendRow")
@@ -1014,37 +1377,44 @@ def makeHwp(root_dir, project_id):
 
         표지(cover_meta)
         목차()
-        상태평가범위()
+        상태평가기준(cover_meta)
         결함의정의()
         상태평가요약(project_id)
         상태평가결과(project_id)
 
         # ===== 파일명 생성 =====
-        line_name   = cover_meta["line_name"].replace(" ", "")   # "3호선"
-        raw_section_core = cover_meta.get("section_core") or ""        # ~ 대신 _ 로 통일
-        section_core_clean = raw_section_core.replace("~", "_").replace(" ", "")  # 
+        line_name = cover_meta["line_name"].replace(" ", "")  # "3호선"
+        raw_section_core = cover_meta.get("section_core") or ""  # ~ 대신 _ 로 통일
+        section_core_clean = raw_section_core.replace("~", "_").replace(" ", "")  #
 
         ## filename_base = f"대구지하철_{line_name}_{section_core_clean}_전체_상태평가보고서"
         filename_base = cover_meta["project_id_desc_en"]
 
-
         hwp.HAction.GetDefault("FileSaveAs_S", hwp.HParameterSet.HFileOpenSave.HSet)
         # set save filename
         # 최종 출력 폴더 구성
-        base_dir_han = os.path.join(root_dir, str(project_id), "04_REPORT", "REPORT_HAN")
-        base_dir_pdf = os.path.join(root_dir, str(project_id), "04_REPORT", "REPORT_PDF")
+        base_dir_han = os.path.join(
+            root_dir, str(project_id), "04_REPORT", "REPORT_HAN"
+        )
+        base_dir_pdf = os.path.join(
+            root_dir, str(project_id), "04_REPORT", "REPORT_PDF"
+        )
         os.makedirs(base_dir_han, exist_ok=True)
         os.makedirs(base_dir_pdf, exist_ok=True)
 
         # HWP 저장
         hwp.HAction.GetDefault("FileSaveAs_S", hwp.HParameterSet.HFileOpenSave.HSet)
-        hwp.HParameterSet.HFileOpenSave.filename = os.path.join(base_dir_han, f"{filename_base}_TOTAL.hwp")
+        hwp.HParameterSet.HFileOpenSave.filename = os.path.join(
+            base_dir_han, f"{filename_base}_TOTAL.hwp"
+        )
         hwp.HParameterSet.HFileOpenSave.Format = "HWP"
         hwp.HAction.Execute("FileSaveAs_S", hwp.HParameterSet.HFileOpenSave.HSet)
 
         # PDF 저장
         hwp.HAction.GetDefault("FileSaveAs_S", hwp.HParameterSet.HFileOpenSave.HSet)
-        hwp.HParameterSet.HFileOpenSave.filename = os.path.join(base_dir_pdf, f"{filename_base}_TOTAL.pdf")
+        hwp.HParameterSet.HFileOpenSave.filename = os.path.join(
+            base_dir_pdf, f"{filename_base}_TOTAL.pdf"
+        )
         hwp.HParameterSet.HFileOpenSave.Format = "PDF"
         hwp.HAction.Execute("FileSaveAs_S", hwp.HParameterSet.HFileOpenSave.HSet)
         # 저장 파일 경로
@@ -1065,7 +1435,9 @@ def makeHwp(root_dir, project_id):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="대구교통공사 전체 상태평가 보고서 생성기")
+    parser = argparse.ArgumentParser(
+        description="대구교통공사 전체 상태평가 보고서 생성기"
+    )
     parser.add_argument("--root-dir", required=True, help="루트 디렉토리 경로")
     parser.add_argument("--project-id", required=True, type=int, help="프로젝트 ID")
     args = parser.parse_args()
